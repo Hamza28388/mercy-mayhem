@@ -104,19 +104,54 @@ function getTopCard(){return discard[discard.length-1];}
 function say(m){$("message").textContent=m;}
 function cardHTML(c){return `<div class="card ${c.color}" data-small="${c.value}">${c.value}</div>`;}
 function render(){
- if(!players.length)return;const p=players[current];
- $("turnLabel").textContent=p.name+"'S TURN";$("directionLabel").textContent="Direction: "+(direction===1?"→":"←");$("deckCount").textContent=deck.length+" cards left";
- $("topCard").innerHTML=cardHTML(getTopCard());$("colorLabel").textContent="Current color: "+activeColor.toUpperCase();
- // Show player names and card counts only. Never render opponents' card backs or faces.
- $("opponents").innerHTML=players.map((x,i)=>i===current?"":`<div class="player ${x.eliminated?"eliminated":""} ${i===current?"active":""}"><div class="avatar">${x.bot?"🤖":"😎"}</div><div class="player-name">${escapeHTML(x.name)}</div><div class="player-count">${x.eliminated?"ELIMINATED":x.hand.length+" cards"}</div></div>`).join("");
- $("handTitle").textContent=isBotGame?"YOUR HAND":p.name.toUpperCase()+"'S HAND";$("handCount").textContent=(isBotGame?players[0].hand.length:p.hand.length)+" cards";
- const h=$("hand");h.innerHTML="";
- const visibleHand=isBotGame?players[0].hand:p.hand;
- if(!isBotGame&&p.bot){h.innerHTML="<div class='info'>Bot is taking its turn.</div>";}
- else visibleHand.forEach((c,i)=>{const e=document.createElement("div");e.innerHTML=cardHTML(c);const el=e.firstElementChild;if((!isBotGame&&!canPlay(c))||(isBotGame&&current!==0))el.style.opacity=".65";el.onclick=()=>{if(isBotGame&&current!==0)return;playCard(i);};h.appendChild(el);});
+ if(!players.length)return;
+
+ const p=players[current];
+ const handOwner=isBotGame?players[0]:p;
+
+ $("turnLabel").textContent=p.name+"'S TURN";
+ $("directionLabel").textContent="Direction: "+(direction===1?"→":"←");
+ $("deckCount").textContent=deck.length+" cards left";
+
+ $("topCard").innerHTML=cardHTML(getTopCard());
+ $("colorLabel").textContent="Current color: "+activeColor.toUpperCase();
+
+ // Show player names and card counts, never their hands or card backs.
+ $("opponents").innerHTML=players.map((x,i)=>i===current?"":`
+ <div class="player ${x.eliminated?"eliminated":""}">
+ <div class="avatar">${x.bot?"🤖":"😎"}</div>
+ <div class="player-name">${escapeHTML(x.name)}</div>
+ <div class="player-count">${x.eliminated?"ELIMINATED":x.hand.length+" cards"}</div>
+ </div>`).join("");
+
+ // Always show only the human player's own hand.
+ $("handTitle").textContent="YOUR HAND";
+ $("handCount").textContent=handOwner.hand.length+" cards";
+
+ const h=$("hand");
+ h.innerHTML="";
+
+ handOwner.hand.forEach((c,i)=>{
+   const e=document.createElement("div");
+   e.innerHTML=cardHTML(c);
+   const el=e.firstElementChild;
+
+   const canControlHand=isBotGame?current===0:!p.bot;
+   if(!canControlHand||!canPlay(c))el.style.opacity=".65";
+
+   el.onclick=()=>{
+     if(!canControlHand)return;
+     playCard(i);
+   };
+
+   h.appendChild(el);
+ });
+
  const humanTurn=!p.bot;
- $("drawButton").disabled=gameOver||!humanTurn||(!isBotGame&&!handVisible);$("unoButton").disabled=gameOver||!humanTurn||(!isBotGame&&!handVisible)||visibleHand.length!==1;
- $("catchButton").disabled=!pendingUno||!humanTurn||(!isBotGame&&!handVisible)||pendingUno.player===current;
+
+ $("drawButton").disabled=gameOver||!humanTurn;
+ $("unoButton").disabled=gameOver||!humanTurn||handOwner.hand.length!==1;
+ $("catchButton").disabled=!pendingUno||!humanTurn||pendingUno.player===current;
 }
 function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function canPlay(c){if(mustDraw)return false;return c.color==="wild"||c.color===activeColor||c.value===getTopCard().value;}
