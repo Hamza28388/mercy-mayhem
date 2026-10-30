@@ -164,9 +164,13 @@ function penaltyValue(c){
 
 function canPlay(c){
  const top=getTopCard();
+
  if(mustDraw>0){
    return penaltyValue(c)>0 && penaltyValue(top)>0;
  }
+
+ if(penaltyValue(c)>0)return true;
+
  return c.color==="wild"||c.color===activeColor||c.value===top.value;
 }
 function recycleDeck(){if(deck.length||discard.length<=1)return;const top=discard.pop();deck=shuffle(discard);discard=[top];}
