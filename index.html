@@ -171,7 +171,7 @@ function rotateHands(){
 function finishPlay(i,chosen){
  const p=players[current],c=p.hand.splice(i,1)[0];discard.push(c);activeColor=chosen||c.color;pendingUno=null;
  say(p.name+" played "+c.value+"!");
- if(c.value==="0")rotateHands();
+if(c.value==="0"&&!isBotGame)rotateHands();
  if(p.hand.length===1)pendingUno={player:current};
  if(p.hand.length===0){endGame(p.name+" wins!");return;}
  if(p.hand.length>=25){p.eliminated=true;say(p.name+" is eliminated!");}
