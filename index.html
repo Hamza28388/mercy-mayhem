@@ -88,7 +88,10 @@ $("introVideo").addEventListener("ended",()=>{$("enterGame").style.display="bloc
 renderNameFields();});
 $("enterGame").style.display="block";
 renderNameFields();
-function makeDeck(){let d=[];COLORS.forEach(color=>{d.push({color,value:"0"});for(let n=1;n<=9;n++){d.push({color,value:String(n)},{color,value:String(n)});}SYMBOLS.forEach(value=>d.push({color,value},{color,value}));});for(let i=0;i<4;i++)d.push({color:"wild",value:"Wild"},{color:"wild",value:"+4"});return shuffle(d);}
+function makeDeck(){let d=[];COLORS.forEach(color=>{d.push({color,value:"0"});for(let n=1;n<=9;n++){d.push({color,value:String(n)},{color,value:String(n)});}SYMBOLS.forEach(value=>{
+ const copies=["+4","+6","+10","Reverse +4"].includes(value)?1:2;
+ for(let i=0;i<copies;i++)d.push({color,value});
+});});for(let i=0;i<4;i++)d.push({color:"wild",value:"Wild"},{color:"wild",value:"+4"});return shuffle(d);}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function startGame(){
  clearTimeout(botTimer);const count=Number($("playerCount").value);isBotGame=count===1;const total=isBotGame?2:count;
@@ -168,7 +171,22 @@ function canPlay(c){
 }
 function recycleDeck(){if(deck.length||discard.length<=1)return;const top=discard.pop();deck=shuffle(discard);discard=[top];}
 function drawOne(){recycleDeck();return deck.length?deck.pop():null;}
-function drawCard(){if(gameOver||players[current].bot||!handVisible)return;const p=players[current],n=mustDraw||1;for(let i=0;i<n;i++){const c=drawOne();if(c)p.hand.push(c);}say(p.name+" drew "+n+" card"+(n===1?"":"s")+".");mustDraw=0;pendingUno=null;advanceTurn();}
+function drawCard(){
+ if(gameOver||players[current].bot||!handVisible)return;
+
+ const p=players[current];
+ const n=mustDraw>0?mustDraw:1;
+
+ for(let i=0;i<n;i++){
+   const c=drawOne();
+   if(c)p.hand.push(c);
+ }
+
+ say(p.name+" drew "+n+" cards.");
+ mustDraw=0;
+ pendingUno=null;
+ advanceTurn();
+}
 function playCard(i){if(gameOver||players[current].bot||!handVisible)return;const c=players[current].hand[i];if(!c||!canPlay(c))return;if(c.color==="wild"){selected=i;waitingWild=true;$("colorOverlay").style.display="flex";return;}finishPlay(i,null);}
 function selectColor(c){if(!waitingWild)return;$("colorOverlay").style.display="none";waitingWild=false;finishPlay(selected,c);selected=null;}
 function rotateHands(){
