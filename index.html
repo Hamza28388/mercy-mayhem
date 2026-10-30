@@ -13,7 +13,7 @@ header{background:var(--ink);color:white;padding:18px 24px;display:flex;justify-
 main{max-width:1150px;margin:auto;padding:22px}.panel{background:#fffaf0;border:1px solid #e6d7bc;border-radius:20px;padding:20px;box-shadow:0 10px 30px #4a30221a}
 h1,h2,h3,p{margin-top:0}h1{font-family:"Playfair Display",serif;font-size:36px}button,select,input{font:inherit}button{border:0;border-radius:12px;padding:11px 17px;font-weight:900;cursor:pointer;transition:.18s}button:hover{transform:translateY(-2px);filter:brightness(1.06)}button:disabled{opacity:.4;cursor:not-allowed;transform:none}
 .primary{background:var(--ink);color:white}.gold{background:var(--gold);color:#332238}.light{background:#eee2ce;color:var(--ink)}.danger{background:#b93345;color:white}
-.setup{max-width:620px;margin:50px auto;text-align:center}.setup p{color:#776a70}.setup-row{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:20px}
+.setup{max-width:620px;margin:50px auto;text-align:center}.setup p{color:#776a70}.setup-row{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:20px}.name-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:6px;margin:12px auto;max-width:520px}.name-fields input{width:calc(100% - 16px);margin:4px}
 select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background:white;color:var(--ink);margin:8px}
 #game{display:none}.topline{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:15px}
 .status{background:#f2e6d1;border-radius:12px;padding:10px 15px;font-weight:900;font-size:14px}
@@ -58,9 +58,10 @@ select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background
 <section class="panel setup" id="setup">
   <div style="font-size:48px">🃏</div><h1>Mercy Mayhem</h1>
   <p>Choose your game and get ready to turn the table upside down.</p>
-  <div class="setup-row"><label><b>Players</b><br><select id="playerCount"><option value="1">1 Player vs Bot</option><option value="2">2 Players</option><option value="3">3 Players</option><option value="4">4 Players</option><option value="5">5 Players</option><option value="6">6 Players</option><option value="7">7 Players</option><option value="8">8 Players</option></select></label></div>
+  <div class="setup-row"><label><b>Players</b><br><select id="playerCount" onchange="renderNameFields()"><option value="1">1 Player vs Bot</option><option value="2">2 Players</option><option value="3">3 Players</option><option value="4">4 Players</option><option value="5">5 Players</option><option value="6">6 Players</option><option value="7">7 Players</option><option value="8">8 Players</option></select></label></div>
+  <div class="name-fields" id="nameFields"></div>
   <button class="primary" onclick="startGame()">START LOCAL GAME →</button>
-  <p class="info">Each player starts with 7 cards. Reach zero cards to win. Get caught holding 25 cards and you're out.</p>
+  <p class="info">Each player starts with 7 cards. Enter player names before starting. Only your own hand is shown; other players’ card backs are hidden.</p>
 </section>
 <section id="game">
   <div class="topline"><div class="status" id="turnLabel">YOUR TURN</div><div class="status" id="directionLabel">Direction: →</div><button class="light" onclick="backToSetup()">NEW GAME</button></div>
@@ -69,34 +70,36 @@ select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background
     <div class="pile"><div class="pile-label">PLAY PILE</div><div id="topCard"></div><div class="center-note" id="colorLabel"></div></div>
   </div><div class="message" id="message">Good luck!</div></div>
   <div class="controls"><button class="gold" id="drawButton" onclick="drawCard()">DRAW CARD</button><button class="primary" id="unoButton" onclick="callUno()">CALL UNO!</button><button class="danger" id="catchButton" onclick="catchUno()" disabled>CATCH UNO</button></div>
-  <div class="panel hand-panel"><div class="hand-heading"><h2 id="handTitle">YOUR HAND</h2><span class="status" id="handCount">0 cards</span></div><div class="hand" id="hand"></div><div class="info">Select a playable card. If you cannot play, draw a card. Wild cards let you choose the next color. In local multiplayer, pass the device when prompted.</div></div>
+  <div class="panel hand-panel"><div class="hand-heading"><h2 id="handTitle">YOUR HAND</h2><span class="status" id="handCount">0 cards</span></div><div class="hand" id="hand"></div><div class="info">Select a playable card. If you cannot play, draw a card. Wild cards let you choose the next color. In local multiplayer, the active player sees their hand on the shared device.</div></div>
 </section>
 </main>
 <div class="overlay" id="colorOverlay"><div class="dialog"><h2>CHOOSE A COLOR</h2><p>What color should the next player play?</p><div class="color-options"><button class="color-btn red" onclick="selectColor('red')" aria-label="Red"></button><button class="color-btn blue" onclick="selectColor('blue')" aria-label="Blue"></button><button class="color-btn green" onclick="selectColor('green')" aria-label="Green"></button><button class="color-btn yellow" onclick="selectColor('yellow')" aria-label="Yellow"></button></div></div></div>
-<div class="overlay" id="passOverlay"><div class="dialog"><div style="font-size:45px">🔒</div><h2>PASS THE DEVICE</h2><p id="passText">Give the device to the next player. Your cards are hidden.</p><button class="primary" onclick="revealNextHand()">I'M READY</button></div></div>
 <div class="overlay" id="endOverlay"><div class="dialog"><div style="font-size:50px">🏆</div><h2 id="endTitle">GAME OVER!</h2><p id="endText"></p><button class="primary" onclick="backToSetup()">PLAY AGAIN</button></div></div>
 <script>
 "use strict";
 const COLORS=["red","blue","green","yellow"], SYMBOLS=["Skip","Reverse","+2"];
 let players=[],deck=[],discard=[],current=0,direction=1,activeColor="red",pendingUno=null,mustDraw=0,waitingWild=false,gameOver=false,selected=null,botTimer=null;
-let handVisible=false, isBotGame=false;
+let handVisible=true, isBotGame=false;
 const $=id=>document.getElementById(id);
 function closeIntro(){const v=$("introVideo");v.pause();$("introScreen").style.display="none";}
+function renderNameFields(){const n=Number($("playerCount").value);const box=$("nameFields");box.innerHTML="";const total=n===1?1:n;for(let i=0;i<total;i++){const label=n===1?"Your name":"Player "+(i+1)+" name";const input=document.createElement("input");input.type="text";input.maxLength=18;input.id="playerName"+i;input.placeholder=label;input.value=n===1?"You":"Player "+(i+1);input.setAttribute("aria-label",label);box.appendChild(input);}}
 $("introVideo").addEventListener("error",()=>{$("introVideo").style.display="none";$("introFallback").style.display="flex";});
-$("introVideo").addEventListener("ended",()=>{$("enterGame").style.display="block";});
+$("introVideo").addEventListener("ended",()=>{$("enterGame").style.display="block";
+renderNameFields();});
 $("enterGame").style.display="block";
+renderNameFields();
 function makeDeck(){let d=[];COLORS.forEach(color=>{d.push({color,value:"0"});for(let n=1;n<=9;n++){d.push({color,value:String(n)},{color,value:String(n)});}SYMBOLS.forEach(value=>d.push({color,value},{color,value}));});for(let i=0;i<4;i++)d.push({color:"wild",value:"Wild"},{color:"wild",value:"+4"});return shuffle(d);}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function startGame(){
  clearTimeout(botTimer);const count=Number($("playerCount").value);isBotGame=count===1;const total=isBotGame?2:count;
- players=Array.from({length:total},(_,i)=>({name:isBotGame?(i===0?"You":"Mayhem Bot"):"Player "+(i+1),hand:[],bot:isBotGame&&i===1,eliminated:false}));
+ players=Array.from({length:total},(_,i)=>({name:isBotGame?(i===0?(($("playerName0")?.value||"You").trim()||"You"):"Mayhem Bot"):((($("playerName"+i)?.value||"").trim())||("Player "+(i+1))),hand:[],bot:isBotGame&&i===1,eliminated:false}));
  deck=makeDeck();discard=[];players.forEach(p=>{for(let i=0;i<7;i++)p.hand.push(deck.pop());});
  let first=deck.pop();while(first.color==="wild"){deck.unshift(first);first=deck.pop();}discard.push(first);activeColor=first.color;
- current=0;direction=1;pendingUno=null;mustDraw=0;waitingWild=false;gameOver=false;selected=null;handVisible=false;
- $("setup").style.display="none";$("game").style.display="block";$("colorOverlay").style.display="none";$("endOverlay").style.display="none";$("passOverlay").style.display="none";
+ current=0;direction=1;pendingUno=null;mustDraw=0;waitingWild=false;gameOver=false;selected=null;handVisible=true;
+ $("setup").style.display="none";$("game").style.display="block";$("colorOverlay").style.display="none";$("endOverlay").style.display="none";
  say("The mayhem begins!");prepareTurn();
 }
-function backToSetup(){clearTimeout(botTimer);gameOver=true;$("endOverlay").style.display="none";$("colorOverlay").style.display="none";$("passOverlay").style.display="none";$("game").style.display="none";$("setup").style.display="block";}
+function backToSetup(){clearTimeout(botTimer);gameOver=true;$("endOverlay").style.display="none";$("colorOverlay").style.display="none";$("game").style.display="none";$("setup").style.display="block";}
 function getTopCard(){return discard[discard.length-1];}
 function say(m){$("message").textContent=m;}
 function cardHTML(c){return `<div class="card ${c.color}" data-small="${c.value}">${c.value}</div>`;}
@@ -104,13 +107,16 @@ function render(){
  if(!players.length)return;const p=players[current];
  $("turnLabel").textContent=p.name+"'S TURN";$("directionLabel").textContent="Direction: "+(direction===1?"→":"←");$("deckCount").textContent=deck.length+" cards left";
  $("topCard").innerHTML=cardHTML(getTopCard());$("colorLabel").textContent="Current color: "+activeColor.toUpperCase();
- $("handTitle").textContent=p.name.toUpperCase()+"'S HAND";$("handCount").textContent=p.hand.length+" cards";
- $("opponents").innerHTML=players.map((x,i)=>i===current?"":`<div class="player ${x.eliminated?"eliminated":""} ${i===current?"active":""}"><div class="avatar">${x.bot?"🤖":"😎"}</div><div class="player-name">${escapeHTML(x.name)}</div><div class="player-count">${x.eliminated?"ELIMINATED":x.hand.length+" cards"}</div><div class="card back small" style="margin:8px auto 0">MM</div></div>`).join("");
+ // Show player names and card counts only. Never render opponents' card backs or faces.
+ $("opponents").innerHTML=players.map((x,i)=>i===current?"":`<div class="player ${x.eliminated?"eliminated":""} ${i===current?"active":""}"><div class="avatar">${x.bot?"🤖":"😎"}</div><div class="player-name">${escapeHTML(x.name)}</div><div class="player-count">${x.eliminated?"ELIMINATED":x.hand.length+" cards"}</div></div>`).join("");
+ $("handTitle").textContent=isBotGame?"YOUR HAND":p.name.toUpperCase()+"'S HAND";$("handCount").textContent=(isBotGame?players[0].hand.length:p.hand.length)+" cards";
  const h=$("hand");h.innerHTML="";
- if(!handVisible||p.bot){for(let i=0;i<p.hand.length;i++){const e=document.createElement("div");e.innerHTML='<div class="card back">MM</div>';h.appendChild(e.firstElementChild);}}
- else p.hand.forEach((c,i)=>{const e=document.createElement("div");e.innerHTML=cardHTML(c);const el=e.firstElementChild;if(!canPlay(c))el.style.opacity=".5";el.onclick=()=>playCard(i);h.appendChild(el);});
- $("drawButton").disabled=gameOver||p.bot||!handVisible;$("unoButton").disabled=gameOver||p.bot||!handVisible||p.hand.length!==1;
- $("catchButton").disabled=!pendingUno||p.bot||!handVisible||pendingUno.player===current;
+ const visibleHand=isBotGame?players[0].hand:p.hand;
+ if(!isBotGame&&p.bot){h.innerHTML="<div class='info'>Bot is taking its turn.</div>";}
+ else visibleHand.forEach((c,i)=>{const e=document.createElement("div");e.innerHTML=cardHTML(c);const el=e.firstElementChild;if((!isBotGame&&!canPlay(c))||(isBotGame&&current!==0))el.style.opacity=".65";el.onclick=()=>{if(isBotGame&&current!==0)return;playCard(i);};h.appendChild(el);});
+ const humanTurn=!p.bot;
+ $("drawButton").disabled=gameOver||!humanTurn||(!isBotGame&&!handVisible);$("unoButton").disabled=gameOver||!humanTurn||(!isBotGame&&!handVisible)||visibleHand.length!==1;
+ $("catchButton").disabled=!pendingUno||!humanTurn||(!isBotGame&&!handVisible)||pendingUno.player===current;
 }
 function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function canPlay(c){if(mustDraw)return false;return c.color==="wild"||c.color===activeColor||c.value===getTopCard().value;}
@@ -143,13 +149,10 @@ function nextActive(from){let n=from;for(let k=0;k<players.length;k++){n=(n+dire
 function prepareTurn(){
  if(gameOver)return;if(players.every(p=>p.eliminated)){endGame("Nobody survived the mayhem!");return;}
  if(activeCount()===1){endGame(players.find(p=>!p.eliminated).name+" wins!");return;}
- const p=players[current];selected=null;waitingWild=false;handVisible=false;
- if(p.bot){render();botTimer=setTimeout(botTurn,850);return;}
- if(isBotGame){handVisible=true;render();return;}
- $("passText").textContent="Give the device to "+p.name+". Other players' cards are hidden until they are ready.";
- $("passOverlay").style.display="flex";render();
+ const p=players[current];selected=null;waitingWild=false;handVisible=true;
+ render();
+ if(p.bot){botTimer=setTimeout(botTurn,850);return;}
 }
-function revealNextHand(){$("passOverlay").style.display="none";handVisible=true;render();}
 function advanceTurn(skip=0){if(gameOver)return;let from=current;for(let i=0;i<=skip;i++)from=nextActive(from);current=from;prepareTurn();}
 function callUno(){if(gameOver||!handVisible||players[current].hand.length!==1)return;if(pendingUno&&pendingUno.player===current)pendingUno=null;say(players[current].name+" called UNO!");render();}
 function catchUno(){if(!pendingUno||pendingUno.player===current||!handVisible)return;const p=players[pendingUno.player];for(let i=0;i<2;i++){const c=drawOne();if(c)p.hand.push(c);}say(players[current].name+" caught "+p.name+"! They draw 2.");pendingUno=null;render();}
