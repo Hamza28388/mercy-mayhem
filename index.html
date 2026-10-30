@@ -214,7 +214,21 @@ function drawCard(){
  pendingUno=null;
  advanceTurn();
 }
-function playCard(i){if(gameOver||players[current].bot||!handVisible)return;const c=players[current].hand[i];if(!c||!canPlay(c))return;if(c.color==="wild"){selected=i;waitingWild=true;$("colorOverlay").style.display="flex";return;}finishPlay(i,null);}
+function playCard(i){
+ if(gameOver||players[current].bot||!handVisible)return;
+
+ const c=players[current].hand[i];
+ if(!c||!canPlay(c))return;
+
+ if(c.color==="wild"){
+   selected=i;
+   waitingWild=true;
+   $("colorOverlay").style.display="flex";
+   return;
+ }
+
+ finishPlay(i,null);
+}
 function selectColor(c){if(!waitingWild)return;$("colorOverlay").style.display="none";waitingWild=false;finishPlay(selected,c);selected=null;}
 function rotateHands(){
  // A player passes their remaining hand to the next active seat in the current direction.
@@ -258,7 +272,22 @@ function callUno(){if(gameOver||!handVisible||players[current].hand.length!==1)r
 function catchUno(){if(!pendingUno||pendingUno.player===current||!handVisible)return;const p=players[pendingUno.player];for(let i=0;i<2;i++){const c=drawOne();if(c)p.hand.push(c);}say(players[current].name+" caught "+p.name+"! They draw 2.");pendingUno=null;render();}
 function botTurn(){
  if(gameOver||!players[current].bot)return;const p=players[current];
- if(mustDraw){const n=mustDraw;for(let i=0;i<n;i++){const c=drawOne();if(c)p.hand.push(c);}mustDraw=0;say("Mayhem Bot draws "+n+" cards!");advanceTurn();return;}
+ if(mustDraw){
+ const stackOptions=p.hand.map((c,i)=>({c,i}))
+   .filter(x=>penaltyValue(x.c)>0 && penaltyValue(getTopCard())>0);
+
+ if(!stackOptions.length){
+   const n=mustDraw;
+   for(let i=0;i<n;i++){
+     const c=drawOne();
+     if(c)p.hand.push(c);
+   }
+   mustDraw=0;
+   say("Mayhem Bot draws "+n+" cards!");
+   advanceTurn();
+   return;
+ }
+}
  const options=p.hand.map((c,i)=>({c,i})).filter(x=>canPlay(x.c));
  if(!options.length){const c=drawOne();if(c)p.hand.push(c);say("Mayhem Bot draws a card.");advanceTurn();return;}
  options.sort((a,b)=>score(b.c)-score(a.c));const x=options[0],color=COLORS[Math.floor(Math.random()*COLORS.length)];finishBotPlay(x.i,color);
@@ -274,7 +303,7 @@ registerCardActivity();
 activeColor=c.color==="wild"?wildColor:c.color;
 pendingUno=null;
 say("Mayhem Bot played "+c.value+"!");
- if(c.value==="0")rotateHands();if(p.hand.length===0){endGame("Mayhem Bot wins!");return;}if(p.hand.length>=25)p.eliminated=true;
+ if(c.value==="0"&&!isBotGame)rotateHands();if(p.hand.length===0){endGame("Mayhem Bot wins!");return;}if(p.hand.length>=25)p.eliminated=true;
  if(penaltyValue(c)>0)mustDraw+=penaltyValue(c);
  let skip=0;
  if(c.value==="Reverse"||c.value==="Reverse +4"){
