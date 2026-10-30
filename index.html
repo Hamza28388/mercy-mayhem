@@ -80,6 +80,8 @@ select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background
 const COLORS=["red","blue","green","yellow"], SYMBOLS=["Skip","Reverse","+2","+4","+6","+10","Reverse +4"];
 let players=[],deck=[],discard=[],current=0,direction=1,activeColor="red",pendingUno=null,mustDraw=0,waitingWild=false,gameOver=false,selected=null,botTimer=null;
 let handVisible=true, isBotGame=false;
+let cardsSinceSpecial=0;
+let nextSpecialAt=10+Math.floor(Math.random()*6);
 const $=id=>document.getElementById(id);
 function closeIntro(){const v=$("introVideo");v.pause();$("introScreen").style.display="none";}
 function renderNameFields(){const n=Number($("playerCount").value);const box=$("nameFields");box.innerHTML="";const total=n===1?1:n;for(let i=0;i<total;i++){const label=n===1?"Your name":"Player "+(i+1)+" name";const input=document.createElement("input");input.type="text";input.maxLength=18;input.id="playerName"+i;input.placeholder=label;input.value=n===1?"You":"Player "+(i+1);input.setAttribute("aria-label",label);box.appendChild(input);}}
@@ -92,11 +94,27 @@ function makeDeck(){let d=[];COLORS.forEach(color=>{d.push({color,value:"0"});fo
  const copies=["+4","+6","+10","Reverse +4"].includes(value)?1:2;
  for(let i=0;i<copies;i++)d.push({color,value});
 });});for(let i=0;i<4;i++)d.push({color:"wild",value:"Wild"},{color:"wild",value:"+4"});return shuffle(d);}
-function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function registerCardActivity(){
+ cardsSinceSpecial++;
+
+ if(cardsSinceSpecial>=nextSpecialAt){
+   const specials=["+4","+6","+10","Reverse +4"];
+   const value=specials[Math.floor(Math.random()*specials.length)];
+
+   deck.push({color:"wild",value});
+   shuffle(deck);
+
+   cardsSinceSpecial=0;
+   nextSpecialAt=10+Math.floor(Math.random()*6);
+   say("A special wild card has entered the deck!");
+ }
+}
 function startGame(){
  clearTimeout(botTimer);const count=Number($("playerCount").value);isBotGame=count===1;const total=isBotGame?2:count;
  players=Array.from({length:total},(_,i)=>({name:isBotGame?(i===0?(($("playerName0")?.value||"You").trim()||"You"):"Mayhem Bot"):((($("playerName"+i)?.value||"").trim())||("Player "+(i+1))),hand:[],bot:isBotGame&&i===1,eliminated:false}));
- deck=makeDeck();discard=[];players.forEach(p=>{for(let i=0;i<7;i++)p.hand.push(deck.pop());});
+ cardsSinceSpecial=0;
+nextSpecialAt=10+Math.floor(Math.random()*6);
+deck=makeDeck();discard=[];players.forEach(p=>{for(let i=0;i<7;i++)p.hand.push(deck.pop());});
  let first=deck.pop();while(first.color==="wild"){deck.unshift(first);first=deck.pop();}discard.push(first);activeColor=first.color;
  current=0;direction=1;pendingUno=null;mustDraw=0;waitingWild=false;gameOver=false;selected=null;handVisible=true;
  $("setup").style.display="none";$("game").style.display="block";$("colorOverlay").style.display="none";$("endOverlay").style.display="none";
@@ -174,7 +192,12 @@ function canPlay(c){
  return c.color==="wild"||c.color===activeColor||c.value===top.value;
 }
 function recycleDeck(){if(deck.length||discard.length<=1)return;const top=discard.pop();deck=shuffle(discard);discard=[top];}
-function drawOne(){recycleDeck();return deck.length?deck.pop():null;}
+function drawOne(){
+ recycleDeck();
+ const card=deck.length?deck.pop():null;
+ if(card)registerCardActivity();
+ return card;
+}
 function drawCard(){
  if(gameOver||players[current].bot||!handVisible)return;
 
@@ -202,7 +225,11 @@ function rotateHands(){
  say("ZERO! Everyone passed their hand in the "+(direction===1?"forward":"reverse")+" direction!");
 }
 function finishPlay(i,chosen){
- const p=players[current],c=p.hand.splice(i,1)[0];discard.push(c);activeColor=chosen||c.color;pendingUno=null;
+ const p=players[current],c=p.hand.splice(i,1)[0];
+discard.push(c);
+registerCardActivity();
+activeColor=chosen||c.color;
+pendingUno=null;
  say(p.name+" played "+c.value+"!");
 if(c.value==="0"&&!isBotGame)rotateHands();
  if(p.hand.length===1)pendingUno={player:current};
@@ -241,7 +268,12 @@ function score(c){
  c.color==="wild"?2:1;
 }
 function finishBotPlay(i,wildColor){
- const p=players[current],c=p.hand.splice(i,1)[0];discard.push(c);activeColor=c.color==="wild"?wildColor:c.color;pendingUno=null;say("Mayhem Bot played "+c.value+"!");
+ const p=players[current],c=p.hand.splice(i,1)[0];
+discard.push(c);
+registerCardActivity();
+activeColor=c.color==="wild"?wildColor:c.color;
+pendingUno=null;
+say("Mayhem Bot played "+c.value+"!");
  if(c.value==="0")rotateHands();if(p.hand.length===0){endGame("Mayhem Bot wins!");return;}if(p.hand.length>=25)p.eliminated=true;
  if(penaltyValue(c)>0)mustDraw+=penaltyValue(c);
  let skip=0;
