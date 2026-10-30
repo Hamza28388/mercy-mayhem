@@ -90,10 +90,33 @@ $("introVideo").addEventListener("ended",()=>{$("enterGame").style.display="bloc
 renderNameFields();});
 $("enterGame").style.display="block";
 renderNameFields();
-function makeDeck(){let d=[];COLORS.forEach(color=>{d.push({color,value:"0"});for(let n=1;n<=9;n++){d.push({color,value:String(n)},{color,value:String(n)});}SYMBOLS.forEach(value=>{
- const copies=["+4","+6","+10","Reverse +4"].includes(value)?1:2;
- for(let i=0;i<copies;i++)d.push({color,value});
-});});for(let i=0;i<4;i++)d.push({color:"wild",value:"Wild"},{color:"wild",value:"+4"});return shuffle(d);}
+
+function shuffle(array){
+ for(let i=array.length-1;i>0;i--){
+   const j=Math.floor(Math.random()*(i+1));
+   [array[i],array[j]]=[array[j],array[i]];
+ }
+ return array;
+}
+
+function makeDeck(){
+ let d=[];
+ COLORS.forEach(color=>{
+   d.push({color,value:"0"});
+   for(let n=1;n<=9;n++){
+     d.push({color,value:String(n)},{color,value:String(n)});
+   }
+   SYMBOLS.forEach(value=>{
+     const copies=["+4","+6","+10","Reverse +4"].includes(value)?1:2;
+     for(let i=0;i<copies;i++)d.push({color,value});
+   });
+ });
+ for(let i=0;i<4;i++){
+   d.push({color:"wild",value:"Wild"},{color:"wild",value:"+4"});
+ }
+ return shuffle(d);
+}
+
 function registerCardActivity(){
  cardsSinceSpecial++;
 
