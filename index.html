@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mercy Mayhem</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Playfair+Display:wght@700;800&display=swap');
+:root{--ink:#271b31;--cream:#fff8e9;--gold:#f5c65b;--green:#176b50}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;color:var(--ink);font-family:Nunito,Arial,sans-serif;background:radial-gradient(circle at 10% 10%,#fff 0,transparent 30%),linear-gradient(135deg,#f9efd9,#ead9bd)}
+header{background:var(--ink);color:white;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:4px solid var(--gold);gap:12px;flex-wrap:wrap}
+.brand{font-family:"Playfair Display",serif;font-size:27px;font-weight:800;letter-spacing:1px}.brand span{color:var(--gold)}.tagline{font-size:11px;letter-spacing:3px;color:#d8c9df}
+main{max-width:1150px;margin:auto;padding:22px}.panel{background:#fffaf0;border:1px solid #e6d7bc;border-radius:20px;padding:20px;box-shadow:0 10px 30px #4a30221a}
+h1,h2,h3,p{margin-top:0}h1{font-family:"Playfair Display",serif;font-size:36px}button,select,input{font:inherit}button{border:0;border-radius:12px;padding:11px 17px;font-weight:900;cursor:pointer;transition:.18s}button:hover{transform:translateY(-2px);filter:brightness(1.06)}button:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.primary{background:var(--ink);color:white}.gold{background:var(--gold);color:#332238}.light{background:#eee2ce;color:var(--ink)}.danger{background:#b93345;color:white}
+.setup{max-width:620px;margin:50px auto;text-align:center}.setup p{color:#776a70}.setup-row{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:20px}
+select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background:white;color:var(--ink);margin:8px}
+#game{display:none}.topline{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:15px}
+.status{background:#f2e6d1;border-radius:12px;padding:10px 15px;font-weight:900;font-size:14px}
+.table{background:radial-gradient(ellipse at center,#258363,#10583f 75%);border:9px solid #563b35;border-radius:30px;padding:22px 15px;min-height:300px;color:white;box-shadow:inset 0 0 30px #052e2470,0 10px 25px #432b2540}
+.opponents{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}.player{min-width:115px;background:#ffffff20;border:1px solid #ffffff40;border-radius:14px;padding:9px;text-align:center;color:white}.player.active{outline:3px solid var(--gold);background:#ffffff35}.player.eliminated{opacity:.35;text-decoration:line-through}
+.avatar{font-size:25px}.player-name{font-weight:900;font-size:13px}.player-count{font-size:11px;color:#f5e6c8}
+.table-center{display:flex;justify-content:center;align-items:center;gap:35px;flex-wrap:wrap;padding:10px}.pile{text-align:center}.pile-label{font-size:11px;letter-spacing:2px;font-weight:900;color:#e9d9b6;margin-bottom:8px}
+.card{width:78px;height:116px;border-radius:12px;border:3px solid #fff9e9;position:relative;display:flex;align-items:center;justify-content:center;color:white;font-size:25px;font-weight:900;box-shadow:0 5px 12px #0005;text-shadow:1px 2px 2px #0006;transform:rotate(-3deg);flex-shrink:0;animation:pop .16s ease-out}
+.card:before{content:"";position:absolute;inset:8px 13px;border:2px solid #ffffffaa;border-radius:50%;transform:rotate(-25deg);pointer-events:none}.card:after{content:attr(data-small);position:absolute;top:5px;left:7px;font-size:10px}
+.card.red{background:linear-gradient(145deg,#f15b55,#a91e35)}.card.blue{background:linear-gradient(145deg,#54b8ed,#1753a6)}.card.green{background:linear-gradient(145deg,#52c98c,#08754d)}.card.yellow{background:linear-gradient(145deg,#ffe16c,#d99a12);color:#493319}.card.wild{background:conic-gradient(#ed4444 0 25%,#f6d44c 0 50%,#269b68 0 75%,#357fe0 0)}
+.card.back{background:repeating-linear-gradient(45deg,#30223d,#30223d 8px,#49314e 8px,#49314e 16px);color:var(--gold);font-size:23px}.card.back:before{border-color:var(--gold)}
+.card.small{width:49px;height:72px;font-size:17px;border-width:2px;border-radius:8px}.card.small:before{inset:5px 8px}.pile .card{width:90px;height:132px}.pile .card.back{transform:rotate(5deg)}
+.center-note{font-size:12px;color:#e7f3e9;margin-top:9px}.controls{display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin:17px 0}
+.message{min-height:25px;text-align:center;font-weight:900;color:#fff0bd;margin:8px 0}.hand-panel{margin-top:18px}.hand-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.hand-heading h2{font-family:"Playfair Display",serif;margin:0}
+.hand{display:flex;gap:8px;overflow-x:auto;padding:18px 8px 22px;min-height:145px;align-items:center}.hand .card{cursor:pointer;transition:.18s;transform:translateY(0) rotate(-2deg)}.hand .card:hover{transform:translateY(-12px) rotate(0)}
+.info{color:#75666c;font-size:12px;line-height:1.5;margin-top:12px}
+.overlay{position:fixed;inset:0;background:#170f20e8;z-index:20;display:none;align-items:center;justify-content:center;padding:20px}.dialog{background:var(--cream);border-radius:22px;padding:28px;max-width:460px;width:100%;text-align:center;box-shadow:0 20px 60px #0007}.dialog h2{font-family:"Playfair Display",serif}
+.color-options{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}.color-btn{width:60px;height:60px;border-radius:50%;border:4px solid white}.color-btn.red{background:#d93443}.color-btn.blue{background:#236bc3}.color-btn.green{background:#15965d}.color-btn.yellow{background:#f4c63d}
+#introScreen{position:fixed;inset:0;z-index:100;background:#100b18;display:flex;align-items:center;justify-content:center;flex-direction:column;color:white}
+#introVideo{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.intro-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px;background:radial-gradient(circle,#3c2850,#100b18 70%)}
+.intro-title{font:800 clamp(38px,8vw,82px) "Playfair Display",serif;letter-spacing:3px;color:var(--gold);text-shadow:0 5px 25px #000}
+#enterGame{position:absolute;z-index:2;bottom:8%;padding:16px 38px;background:var(--gold);color:#211326;border:2px solid #fff1c2;border-radius:12px;font-size:18px;font-weight:900}
+#passOverlay{z-index:15}
+@keyframes pop{from{transform:scale(.8);opacity:.5}to{transform:scale(1);opacity:1}}
+@media(max-width:600px){main{padding:12px}.table{padding:15px 8px}.card{width:65px;height:98px}.pile .card{width:78px;height:114px}.brand{font-size:23px}h1{font-size:29px}}
+</style>
+</head>
+<body>
+<div id="introScreen">
+  <video id="introVideo" autoplay muted playsinline>
+    <source src="intro.mp4" type="video/mp4">
+  </video>
+  <div class="intro-fallback" id="introFallback" style="display:none">
+    <div class="intro-title">MERCY MAYHEM</div><p>PLAY NICE. OR DON'T.</p>
+    <p style="max-width:440px">Add your video file named <b>intro.mp4</b> beside index.html to show your cinematic intro.</p>
+  </div>
+  <button id="enterGame" onclick="closeIntro()">ENTER GAME</button>
+</div>
+<header><div><div class="brand">MERCY <span>MAYHEM</span></div><div class="tagline">PLAY NICE. OR DON'T.</div></div><div>🃏 <b>THE WILD SIDE OF CARDS</b></div></header>
+<main>
+<section class="panel setup" id="setup">
+  <div style="font-size:48px">🃏</div><h1>Mercy Mayhem</h1>
+  <p>Choose your game and get ready to turn the table upside down.</p>
+  <div class="setup-row"><label><b>Players</b><br><select id="playerCount"><option value="1">1 Player vs Bot</option><option value="2">2 Players</option><option value="3">3 Players</option><option value="4">4 Players</option><option value="5">5 Players</option><option value="6">6 Players</option><option value="7">7 Players</option><option value="8">8 Players</option></select></label></div>
+  <button class="primary" onclick="startGame()">START LOCAL GAME →</button>
+  <p class="info">Each player starts with 7 cards. Reach zero cards to win. Get caught holding 25 cards and you're out.</p>
+</section>
+<section id="game">
+  <div class="topline"><div class="status" id="turnLabel">YOUR TURN</div><div class="status" id="directionLabel">Direction: →</div><button class="light" onclick="backToSetup()">NEW GAME</button></div>
+  <div class="table"><div class="opponents" id="opponents"></div><div class="table-center">
+    <div class="pile"><div class="pile-label">DRAW PILE</div><div class="card back" onclick="drawCard()">MM</div><div class="center-note" id="deckCount"></div></div>
+    <div class="pile"><div class="pile-label">PLAY PILE</div><div id="topCard"></div><div class="center-note" id="colorLabel"></div></div>
+  </div><div class="message" id="message">Good luck!</div></div>
+  <div class="controls"><button class="gold" id="drawButton" onclick="drawCard()">DRAW CARD</button><button class="primary" id="unoButton" onclick="callUno()">CALL UNO!</button><button class="danger" id="catchButton" onclick="catchUno()" disabled>CATCH UNO</button></div>
+  <div class="panel hand-panel"><div class="hand-heading"><h2 id="handTitle">YOUR HAND</h2><span class="status" id="handCount">0 cards</span></div><div class="hand" id="hand"></div><div class="info">Select a playable card. If you cannot play, draw a card. Wild cards let you choose the next color. In local multiplayer, pass the device when prompted.</div></div>
+</section>
+</main>
+<div class="overlay" id="colorOverlay"><div class="dialog"><h2>CHOOSE A COLOR</h2><p>What color should the next player play?</p><div class="color-options"><button class="color-btn red" onclick="selectColor('red')" aria-label="Red"></button><button class="color-btn blue" onclick="selectColor('blue')" aria-label="Blue"></button><button class="color-btn green" onclick="selectColor('green')" aria-label="Green"></button><button class="color-btn yellow" onclick="selectColor('yellow')" aria-label="Yellow"></button></div></div></div>
+<div class="overlay" id="passOverlay"><div class="dialog"><div style="font-size:45px">🔒</div><h2>PASS THE DEVICE</h2><p id="passText">Give the device to the next player. Your cards are hidden.</p><button class="primary" onclick="revealNextHand()">I'M READY</button></div></div>
+<div class="overlay" id="endOverlay"><div class="dialog"><div style="font-size:50px">🏆</div><h2 id="endTitle">GAME OVER!</h2><p id="endText"></p><button class="primary" onclick="backToSetup()">PLAY AGAIN</button></div></div>
+<script>
+"use strict";
+const COLORS=["red","blue","green","yellow"], SYMBOLS=["Skip","Reverse","+2"];
+let players=[],deck=[],discard=[],current=0,direction=1,activeColor="red",pendingUno=null,mustDraw=0,waitingWild=false,gameOver=false,selected=null,botTimer=null;
+let handVisible=false, isBotGame=false;
+const $=id=>document.getElementById(id);
+function closeIntro(){const v=$("introVideo");v.pause();$("introScreen").style.display="none";}
+$("introVideo").addEventListener("error",()=>{$("introVideo").style.display="none";$("introFallback").style.display="flex";});
+$("introVideo").addEventListener("ended",()=>{$("enterGame").style.display="block";});
+$("enterGame").style.display="block";
+function makeDeck(){let d=[];COLORS.forEach(color=>{d.push({color,value:"0"});for(let n=1;n<=9;n++){d.push({color,value:String(n)},{color,value:String(n)});}SYMBOLS.forEach(value=>d.push({color,value},{color,value}));});for(let i=0;i<4;i++)d.push({color:"wild",value:"Wild"},{color:"wild",value:"+4"});return shuffle(d);}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function startGame(){
+ clearTimeout(botTimer);const count=Number($("playerCount").value);isBotGame=count===1;const total=isBotGame?2:count;
+ players=Array.from({length:total},(_,i)=>({name:isBotGame?(i===0?"You":"Mayhem Bot"):"Player "+(i+1),hand:[],bot:isBotGame&&i===1,eliminated:false}));
+ deck=makeDeck();discard=[];players.forEach(p=>{for(let i=0;i<7;i++)p.hand.push(deck.pop());});
+ let first=deck.pop();while(first.color==="wild"){deck.unshift(first);first=deck.pop();}discard.push(first);activeColor=first.color;
+ current=0;direction=1;pendingUno=null;mustDraw=0;waitingWild=false;gameOver=false;selected=null;handVisible=false;
+ $("setup").style.display="none";$("game").style.display="block";$("colorOverlay").style.display="none";$("endOverlay").style.display="none";$("passOverlay").style.display="none";
+ say("The mayhem begins!");prepareTurn();
+}
+function backToSetup(){clearTimeout(botTimer);gameOver=true;$("endOverlay").style.display="none";$("colorOverlay").style.display="none";$("passOverlay").style.display="none";$("game").style.display="none";$("setup").style.display="block";}
+function getTopCard(){return discard[discard.length-1];}
+function say(m){$("message").textContent=m;}
+function cardHTML(c){return `<div class="card ${c.color}" data-small="${c.value}">${c.value}</div>`;}
+function render(){
+ if(!players.length)return;const p=players[current];
+ $("turnLabel").textContent=p.name+"'S TURN";$("directionLabel").textContent="Direction: "+(direction===1?"→":"←");$("deckCount").textContent=deck.length+" cards left";
+ $("topCard").innerHTML=cardHTML(getTopCard());$("colorLabel").textContent="Current color: "+activeColor.toUpperCase();
+ $("handTitle").textContent=p.name.toUpperCase()+"'S HAND";$("handCount").textContent=p.hand.length+" cards";
+ $("opponents").innerHTML=players.map((x,i)=>i===current?"":`<div class="player ${x.eliminated?"eliminated":""} ${i===current?"active":""}"><div class="avatar">${x.bot?"🤖":"😎"}</div><div class="player-name">${escapeHTML(x.name)}</div><div class="player-count">${x.eliminated?"ELIMINATED":x.hand.length+" cards"}</div><div class="card back small" style="margin:8px auto 0">MM</div></div>`).join("");
+ const h=$("hand");h.innerHTML="";
+ if(!handVisible||p.bot){for(let i=0;i<p.hand.length;i++){const e=document.createElement("div");e.innerHTML='<div class="card back">MM</div>';h.appendChild(e.firstElementChild);}}
+ else p.hand.forEach((c,i)=>{const e=document.createElement("div");e.innerHTML=cardHTML(c);const el=e.firstElementChild;if(!canPlay(c))el.style.opacity=".5";el.onclick=()=>playCard(i);h.appendChild(el);});
+ $("drawButton").disabled=gameOver||p.bot||!handVisible;$("unoButton").disabled=gameOver||p.bot||!handVisible||p.hand.length!==1;
+ $("catchButton").disabled=!pendingUno||p.bot||!handVisible||pendingUno.player===current;
+}
+function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function canPlay(c){if(mustDraw)return false;return c.color==="wild"||c.color===activeColor||c.value===getTopCard().value;}
+function recycleDeck(){if(deck.length||discard.length<=1)return;const top=discard.pop();deck=shuffle(discard);discard=[top];}
+function drawOne(){recycleDeck();return deck.length?deck.pop():null;}
+function drawCard(){if(gameOver||players[current].bot||!handVisible)return;const p=players[current],n=mustDraw||1;for(let i=0;i<n;i++){const c=drawOne();if(c)p.hand.push(c);}say(p.name+" drew "+n+" card"+(n===1?"":"s")+".");mustDraw=0;pendingUno=null;advanceTurn();}
+function playCard(i){if(gameOver||players[current].bot||!handVisible)return;const c=players[current].hand[i];if(!c||!canPlay(c))return;if(c.color==="wild"){selected=i;waitingWild=true;$("colorOverlay").style.display="flex";return;}finishPlay(i,null);}
+function selectColor(c){if(!waitingWild)return;$("colorOverlay").style.display="none";waitingWild=false;finishPlay(selected,c);selected=null;}
+function rotateHands(){
+ // A player passes their remaining hand to the next active seat in the current direction.
+ const active=players.map((p,i)=>!p.eliminated?i:-1).filter(i=>i>=0);if(active.length<2)return;
+ const old=players.map(p=>p.hand);const nextHands=old.map(h=>h);
+ active.forEach(i=>{const recipient=active[(active.indexOf(i)+direction+active.length)%active.length];nextHands[recipient]=old[i];});
+ players.forEach((p,i)=>{if(!p.eliminated)p.hand=nextHands[i];});
+ say("ZERO! Everyone passed their hand in the "+(direction===1?"forward":"reverse")+" direction!");
+}
+function finishPlay(i,chosen){
+ const p=players[current],c=p.hand.splice(i,1)[0];discard.push(c);activeColor=chosen||c.color;pendingUno=null;
+ say(p.name+" played "+c.value+"!");
+ if(c.value==="0")rotateHands();
+ if(p.hand.length===1)pendingUno={player:current};
+ if(p.hand.length===0){endGame(p.name+" wins!");return;}
+ if(p.hand.length>=25){p.eliminated=true;say(p.name+" is eliminated!");}
+ if(c.value==="+2")mustDraw=2;if(c.value==="+4")mustDraw=4;
+ let skip=0;if(c.value==="Reverse"){direction*=-1;if(activeCount()===2)skip=1;}if(c.value==="Skip")skip=1;
+ advanceTurn(skip);
+}
+function activeCount(){return players.filter(p=>!p.eliminated).length;}
+function nextActive(from){let n=from;for(let k=0;k<players.length;k++){n=(n+direction+players.length)%players.length;if(!players[n].eliminated)return n;}return from;}
+function prepareTurn(){
+ if(gameOver)return;if(players.every(p=>p.eliminated)){endGame("Nobody survived the mayhem!");return;}
+ if(activeCount()===1){endGame(players.find(p=>!p.eliminated).name+" wins!");return;}
+ const p=players[current];selected=null;waitingWild=false;handVisible=false;
+ if(p.bot){render();botTimer=setTimeout(botTurn,850);return;}
+ if(isBotGame){handVisible=true;render();return;}
+ $("passText").textContent="Give the device to "+p.name+". Other players' cards are hidden until they are ready.";
+ $("passOverlay").style.display="flex";render();
+}
+function revealNextHand(){$("passOverlay").style.display="none";handVisible=true;render();}
+function advanceTurn(skip=0){if(gameOver)return;let from=current;for(let i=0;i<=skip;i++)from=nextActive(from);current=from;prepareTurn();}
+function callUno(){if(gameOver||!handVisible||players[current].hand.length!==1)return;if(pendingUno&&pendingUno.player===current)pendingUno=null;say(players[current].name+" called UNO!");render();}
+function catchUno(){if(!pendingUno||pendingUno.player===current||!handVisible)return;const p=players[pendingUno.player];for(let i=0;i<2;i++){const c=drawOne();if(c)p.hand.push(c);}say(players[current].name+" caught "+p.name+"! They draw 2.");pendingUno=null;render();}
+function botTurn(){
+ if(gameOver||!players[current].bot)return;const p=players[current];
+ if(mustDraw){const n=mustDraw;for(let i=0;i<n;i++){const c=drawOne();if(c)p.hand.push(c);}mustDraw=0;say("Mayhem Bot draws "+n+" cards!");advanceTurn();return;}
+ const options=p.hand.map((c,i)=>({c,i})).filter(x=>canPlay(x.c));
+ if(!options.length){const c=drawOne();if(c)p.hand.push(c);say("Mayhem Bot draws a card.");advanceTurn();return;}
+ options.sort((a,b)=>score(b.c)-score(a.c));const x=options[0],color=COLORS[Math.floor(Math.random()*COLORS.length)];finishBotPlay(x.i,color);
+}
+function score(c){return c.value==="+4"?4:c.value==="+2"?3:c.color==="wild"?2:1;}
+function finishBotPlay(i,wildColor){
+ const p=players[current],c=p.hand.splice(i,1)[0];discard.push(c);activeColor=c.color==="wild"?wildColor:c.color;pendingUno=null;say("Mayhem Bot played "+c.value+"!");
+ if(c.value==="0")rotateHands();if(p.hand.length===0){endGame("Mayhem Bot wins!");return;}if(p.hand.length>=25)p.eliminated=true;
+ if(c.value==="+2")mustDraw=2;if(c.value==="+4")mustDraw=4;let skip=0;
+ if(c.value==="Reverse"){direction*=-1;if(activeCount()===2)skip=1;}if(c.value==="Skip")skip=1;advanceTurn(skip);
+}
+function endGame(m){gameOver=true;handVisible=false;$("endTitle").textContent="MAYHEM OVER!";$("endText").textContent=m;$("endOverlay").style.display="flex";render();}
+</script>
+</body>
+</html>
