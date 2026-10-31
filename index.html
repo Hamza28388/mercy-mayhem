@@ -75,8 +75,34 @@ select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background
 </main>
 <div class="overlay" id="colorOverlay"><div class="dialog"><h2>CHOOSE A COLOR</h2><p>What color should the next player play?</p><div class="color-options"><button class="color-btn red" onclick="selectColor('red')" aria-label="Red"></button><button class="color-btn blue" onclick="selectColor('blue')" aria-label="Blue"></button><button class="color-btn green" onclick="selectColor('green')" aria-label="Green"></button><button class="color-btn yellow" onclick="selectColor('yellow')" aria-label="Yellow"></button></div></div></div>
 <div class="overlay" id="endOverlay"><div class="dialog"><div style="font-size:50px">🏆</div><h2 id="endTitle">GAME OVER!</h2><p id="endText"></p><button class="primary" onclick="backToSetup()">PLAY AGAIN</button></div></div>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
 <script>
 "use strict";
+const firebaseConfig = {
+  apiKey: "AIzaSyBS_DTVrK2HHMXqGISkGPwLP_z7xsL5vQg",
+  authDomain: "hamza-9a738.firebaseapp.com",
+  databaseURL: "https://hamza-9a738-default-rtdb.firebaseio.com",
+  projectId: "hamza-9a738",
+  storageBucket: "hamza-9a738.firebasestorage.app",
+  messagingSenderId: "565843347412",
+  appId: "1:565843347412:web:864b3908fb6e3e38423841"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const database = firebase.database();
+  let currentUser = null;
+
+auth.signInAnonymously()
+  .then((result) => {
+    currentUser = result.user;
+    console.log("Connected to Firebase!");
+  })
+  .catch((error) => {
+    console.error("Firebase connection error:", error);
+  });
 const COLORS=["red","blue","green","yellow"], SYMBOLS=["Skip","Reverse","+2","+4","+6","+10","Reverse +4"];
 let players=[],deck=[],discard=[],current=0,direction=1,activeColor="red",pendingUno=null,mustDraw=0,waitingWild=false,gameOver=false,selected=null,botTimer=null;
 let handVisible=true, isBotGame=false;
@@ -366,7 +392,6 @@ function prepareTurn(){
    botTimer=setTimeout(botTurn,900);
  }
 }
-
 function endGame(m){
  gameOver=true;
  handVisible=false;
