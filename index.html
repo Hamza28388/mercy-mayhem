@@ -40,6 +40,33 @@ select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background
 #passOverlay{z-index:15}
 @keyframes pop{from{transform:scale(.8);opacity:.5}to{transform:scale(1);opacity:1}}
 @media(max-width:600px){main{padding:12px}.table{padding:15px 8px}.card{width:65px;height:98px}.pile .card{width:78px;height:114px}.brand{font-size:23px}h1{font-size:29px}}
+
+/* MERCY MAYHEM — glossy signature card redesign */
+.card{width:88px;height:132px;border:3px solid #fffdf5;border-radius:15px;overflow:hidden;isolation:isolate;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#fff;font-family:Nunito,Arial,sans-serif;font-size:17px;font-weight:1000;box-shadow:0 7px 0 #0003,0 12px 18px #0006,inset 0 0 0 1px #ffffff70;text-shadow:0 2px 3px #000b;transform:rotate(-2deg);flex-shrink:0;animation:pop .16s ease-out}
+.card:before{content:"";position:absolute;z-index:-1;inset:13px 7px;border:3px solid #ffffffa8;border-radius:48% 42% 48% 42%;transform:rotate(-28deg);box-shadow:0 0 0 3px #ffffff22,inset 0 0 12px #fff5;pointer-events:none}
+.card:after{content:"";position:absolute;z-index:-1;width:145%;height:34%;left:-20%;top:36%;border-top:5px solid #ffffff55;border-bottom:3px solid #ffffff33;border-radius:50%;transform:rotate(-34deg);pointer-events:none}
+.card.red{background:radial-gradient(ellipse at 28% 22%,#ff9a82 0,#f04442 35%,#a5092c 100%)}
+.card.blue{background:radial-gradient(ellipse at 28% 22%,#9ae7ff 0,#178be4 38%,#063c91 100%)}
+.card.green{background:radial-gradient(ellipse at 28% 22%,#a9ff9a 0,#28bb58 38%,#00603b 100%)}
+.card.yellow{background:radial-gradient(ellipse at 28% 22%,#fff7a2 0,#ffc52e 42%,#c87900 100%);color:#241b12;text-shadow:0 1px 2px #fff9}
+.card.wild{background:radial-gradient(circle at 50% 45%,#21132d 0,#080910 70%);border-color:#fff8e9}
+.card.wild:before{border-color:#f6d45c;box-shadow:0 0 12px #e5ae3f99,inset 0 0 12px #b85aff55}
+.card.wild:after{height:65%;top:18%;border:0;background:conic-gradient(from 25deg,#ef3e4d 0 20%,#ffbd36 20% 39%,#25bd79 39% 59%,#2789ee 59% 78%,#9b50db 78%);filter:blur(1px);opacity:.85;clip-path:polygon(0 38%,100% 0,75% 100%,10% 75%)}
+.card.back{background:radial-gradient(circle at center,#4b2460,#120d20 72%);border:3px solid #f7d45f;color:#ffd35a;font-size:27px;letter-spacing:1px;text-shadow:0 2px 0 #5c3100,0 0 12px #ffcf4a;transform:rotate(3deg)}
+.card.back:before{inset:8px;border:2px solid #f7d45f;border-radius:10px;transform:rotate(0);box-shadow:inset 0 0 0 4px #f7d45f33}
+.card.back:after{content:"♛";left:0;top:25%;width:100%;height:auto;background:none;clip-path:none;border:0;text-align:center;font-size:38px;color:#f7d45f;transform:none}
+.card-corner{position:absolute;z-index:2;left:6px;font-size:10px;line-height:1;font-weight:1000;max-width:75%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card-corner.top{top:7px}.card-corner.bottom{right:6px;left:auto;bottom:7px;transform:rotate(180deg)}
+.card-orbit{position:absolute;inset:17% 11%;border:2px solid #ffffff50;border-radius:48%;transform:rotate(-28deg);pointer-events:none}
+.card-symbol{z-index:1;font-size:43px;line-height:1;font-weight:1000;letter-spacing:-2px;color:inherit;-webkit-text-stroke:1px #171018;text-shadow:2px 3px 0 #0008,0 0 9px #fff6}
+.card-caption{z-index:1;max-width:90%;font-size:9px;line-height:1.05;font-weight:1000;text-align:center;letter-spacing:.2px;padding:3px 4px;border-radius:5px;background:#09070cb5;color:white;text-shadow:0 1px 2px #000;}
+.card.yellow .card-caption{background:#422900d9;color:white}
+.card.small{width:54px;height:80px;font-size:13px;border-width:2px;border-radius:10px}.card.small .card-symbol{font-size:27px}.card.small .card-corner{font-size:7px}.card.small .card-caption{font-size:6px}
+.pile .card{width:100px;height:148px}.pile .card.back{transform:rotate(5deg)}
+.hand{gap:10px;padding:22px 10px 26px;min-height:170px}.hand .card{cursor:pointer;transition:transform .18s,filter .18s;transform:translateY(0) rotate(-2deg)}.hand .card:hover{transform:translateY(-13px) rotate(0) scale(1.04);filter:brightness(1.12)}
+.table{background:radial-gradient(ellipse at center,#187b58 0,#075038 72%,#033b2c 100%);border-color:#68452d;box-shadow:inset 0 0 45px #001f17a8,0 10px 25px #432b2540}
+@media(max-width:600px){.card{width:72px;height:108px}.card-symbol{font-size:35px}.card-caption{font-size:8px}.card-corner{font-size:8px}.pile .card{width:84px;height:124px}.hand{gap:7px}}
+
 </style>
 </head>
 <body>
@@ -161,8 +188,12 @@ function getTopCard(){return discard[discard.length-1];}
 function say(message){$("message").textContent=message;}
 function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function cardHTML(c){
-  const label=c.value==="Rainbow Roulette"?"ROULETTE":c.value;
-  return `<div class="card ${c.color}" data-small="${escapeHTML(label)}">${escapeHTML(label)}</div>`;
+  const label=c.value==="Rainbow Roulette"?"RAINBOW ROULETTE":c.value.toUpperCase();
+  const icons={"Skip":"⊘","Reverse":"⇄","+2":"+2","+4":"▤","+6":"+6","+10":"+10","Reverse +4":"⇄","Discard All":"▤","Skip Everyone":"♟♟","7":"↗","0":"0","Wild":"✦","Rainbow Roulette":"◉"};
+  const icon=icons[c.value]||label;
+  const kind=c.color==="wild"?"wild-face":(penaltyValue(c)>0?"draw-face":(isAction(c)?"action-face":"number-face"));
+  const sub=c.value==="Discard All"?"DISCARD ALL":c.value==="Skip Everyone"?"SKIP EVERYONE":c.value==="Rainbow Roulette"?"RAINBOW ROULETTE":c.value==="Reverse +4"?"WILD REVERSE +4":c.value==="Wild"?"WILD":c.value==="+4"?"WILD DRAW +4":c.value==="+6"?"WILD DRAW 6":c.value==="+10"?"WILD DRAW 10":c.value==="7"?"7 SWAP":c.value==="0"?"0 PASS":label;
+  return `<div class="card ${c.color} ${kind}" data-small="${escapeHTML(label)}"><span class="card-corner top">${escapeHTML(label)}</span><span class="card-orbit"></span><span class="card-symbol">${escapeHTML(icon)}</span><span class="card-caption">${escapeHTML(sub)}</span><span class="card-corner bottom">${escapeHTML(label)}</span></div>`;
 }
 function isAction(c){
   return ["Skip","Reverse","+2","Discard All","Skip Everyone"].includes(c.value) ||
