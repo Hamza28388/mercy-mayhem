@@ -233,6 +233,7 @@ function drawCard(){
  }
 
  say(p.name+" drew "+n+" cards.");
+ checkElimination(p);
  mustDraw=0;
  pendingUno=null;
  advanceTurn();
@@ -271,7 +272,7 @@ pendingUno=null;
 if(c.value==="0"&&!isBotGame)rotateHands();
  if(p.hand.length===1)pendingUno={player:current};
  if(p.hand.length===0){endGame(p.name+" wins!");return;}
- if(p.hand.length>=25){p.eliminated=true;say(p.name+" is eliminated!");}
+ checkElimination(p);
  if(penaltyValue(c)>0)mustDraw+=penaltyValue(c);
  let skip=0;
 if(c.value==="Reverse"||c.value==="Reverse +4"){
@@ -281,18 +282,30 @@ if(c.value==="Reverse"||c.value==="Reverse +4"){
 if(c.value==="Skip")skip=1;
  advanceTurn(skip);
 }
-function activeCount(){return players.filter(p=>!p.eliminated).length;}
-function nextActive(from){let n=from;for(let k=0;k<players.length;k++){n=(n+direction+players.length)%players.length;if(!players[n].eliminated)return n;}return from;}
-function prepareTurn(){
- if(gameOver)return;if(players.every(p=>p.eliminated)){endGame("Nobody survived the mayhem!");return;}
- if(activeCount()===1){endGame(players.find(p=>!p.eliminated).name+" wins!");return;}
- const p=players[current];selected=null;waitingWild=false;handVisible=true;
- render();
- if(p.bot){botTimer=setTimeout(botTurn,850);return;}
+function checkElimination(p){
+ if(p.hand.length>=25&&!p.eliminated){
+   p.eliminated=true;
+   say(p.name+" has reached 25 cards and is eliminated!");
+   return true;
+ }
+ return false;
+}
+
+function activeCount(){
+ return players.filter(p=>!p.eliminated).length;
+}
+
+function nextActive(from){
+ let n=from;
+ for(let k=0;k<players.length;k++){
+   n=(n+direction+players.length)%players.length;
+   if(!players[n].eliminated)return n;
+ }
+ return from;
 }
 function advanceTurn(skip=0){if(gameOver)return;let from=current;for(let i=0;i<=skip;i++)from=nextActive(from);current=from;prepareTurn();}
 function callUno(){if(gameOver||!handVisible||players[current].hand.length!==1)return;if(pendingUno&&pendingUno.player===current)pendingUno=null;say(players[current].name+" called UNO!");render();}
-function catchUno(){if(!pendingUno||pendingUno.player===current||!handVisible)return;const p=players[pendingUno.player];for(let i=0;i<2;i++){const c=drawOne();if(c)p.hand.push(c);}say(players[current].name+" caught "+p.name+"! They draw 2.");pendingUno=null;render();}
+function catchUno(){if(!pendingUno||pendingUno.player===current||!handVisible)return;const p=players[pendingUno.player];for(let i=0;i<2;i++){const c=drawOne();if(c)p.hand.push(c);}say(players[current].name+" caught "+p.name+"! They draw 2.");checkElimination(p);pendingUno=null;render();}
 function botTurn(){
  if(gameOver||!players[current].bot)return;const p=players[current];
  if(mustDraw){
@@ -306,13 +319,14 @@ function botTurn(){
      if(c)p.hand.push(c);
    }
    mustDraw=0;
-   say("Mayhem Bot draws "+n+" cards!");
-   advanceTurn();
-   return;
+  say("Mayhem Bot draws "+n+" cards!");
+checkElimination(p);
+advanceTurn();
+return;
  }
 }
  const options=p.hand.map((c,i)=>({c,i})).filter(x=>canPlay(x.c));
- if(!options.length){const c=drawOne();if(c)p.hand.push(c);say("Mayhem Bot draws a card.");advanceTurn();return;}
+ if(!options.length){const c=drawOne();if(c)p.hand.push(c);say("Mayhem Bot draws a card.");checkElimination(p);advanceTurn();return;}
  options.sort((a,b)=>score(b.c)-score(a.c));const x=options[0],color=COLORS[Math.floor(Math.random()*COLORS.length)];finishBotPlay(x.i,color);
 }
 function score(c){
@@ -326,7 +340,7 @@ registerCardActivity();
 activeColor=c.color==="wild"?wildColor:c.color;
 pendingUno=null;
 say("Mayhem Bot played "+c.value+"!");
- if(c.value==="0"&&!isBotGame)rotateHands();if(p.hand.length===0){endGame("Mayhem Bot wins!");return;}if(p.hand.length>=25)p.eliminated=true;
+ if(c.value==="0"&&!isBotGame)rotateHands();if(p.hand.length===0){endGame("Mayhem Bot wins!");return;}checkElimination(p);
  if(penaltyValue(c)>0)mustDraw+=penaltyValue(c);
  let skip=0;
  if(c.value==="Reverse"||c.value==="Reverse +4"){
@@ -336,7 +350,31 @@ say("Mayhem Bot played "+c.value+"!");
 if(c.value==="Skip")skip=1;
 advanceTurn(skip);
 }
-function endGame(m){gameOver=true;handVisible=false;$("endTitle").textContent="MAYHEM OVER!";$("endText").textContent=m;$("endOverlay").style.display="flex";render();}
+function prepareTurn(){
+ if(gameOver)return;
+
+ if(activeCount()<=1){
+   const winner=players.find(p=>!p.eliminated);
+   endGame(winner?winner.name+" wins!":"Game over!");
+   return;
+ }
+
+ render();
+
+ if(players[current].bot){
+   clearTimeout(botTimer);
+   botTimer=setTimeout(botTurn,900);
+ }
+}
+
+function endGame(m){
+ gameOver=true;
+ handVisible=false;
+ $("endTitle").textContent="MAYHEM OVER!";
+ $("endText").textContent=m;
+ $("endOverlay").style.display="flex";
+ render();
+}
 </script>
 </body>
 </html>
