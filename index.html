@@ -61,6 +61,8 @@ select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background
   <div class="setup-row"><label><b>Players</b><br><select id="playerCount" onchange="renderNameFields()"><option value="1">1 Player vs Bot</option><option value="2">2 Players</option><option value="3">3 Players</option><option value="4">4 Players</option><option value="5">5 Players</option><option value="6">6 Players</option><option value="7">7 Players</option><option value="8">8 Players</option></select></label></div>
   <div class="name-fields" id="nameFields"></div>
   <button class="primary" onclick="startGame()">START LOCAL GAME →</button>
+  <button class="gold" onclick="createOnlineRoom()">CREATE ONLINE ROOM</button>
+  <button class="light" onclick="joinOnlineRoom()">JOIN ONLINE ROOM</button>
   <p class="info">Each player starts with 7 cards. Enter player names before starting. Only your own hand is shown; other players’ card backs are hidden.</p>
 </section>
 <section id="game">
@@ -106,6 +108,8 @@ auth.signInAnonymously()
 const COLORS=["red","blue","green","yellow"], SYMBOLS=["Skip","Reverse","+2","+4","+6","+10","Reverse +4"];
 let players=[],deck=[],discard=[],current=0,direction=1,activeColor="red",pendingUno=null,mustDraw=0,waitingWild=false,gameOver=false,selected=null,botTimer=null;
 let handVisible=true, isBotGame=false;
+let onlineRoomId = null;
+let onlineRoomRef = null;
 let cardsSinceSpecial=0;
 let nextSpecialAt=10+Math.floor(Math.random()*6);
 const $=id=>document.getElementById(id);
@@ -158,6 +162,25 @@ function registerCardActivity(){
    say("A special wild card has entered the deck!");
  }
 }
+async function createOnlineRoom(){
+  if(!currentUser){
+    alert("Connecting to server. Please try again.");
+    return;
+  }
+
+  const roomId = Math.random().toString(36).substring(2,8).toUpperCase();
+
+  onlineRoomId = roomId;
+  onlineRoomRef = database.ref("rooms/" + roomId);
+
+  await onlineRoomRef.set({
+    host: currentUser.uid,
+    status: "waiting",
+    createdAt: Date.now()
+  });
+
+  alert("Your room code is: " + roomId);
+}  
 function startGame(){
  clearTimeout(botTimer);const count=Number($("playerCount").value);isBotGame=count===1;const total=isBotGame?2:count;
  players=Array.from({length:total},(_,i)=>({name:isBotGame?(i===0?(($("playerName0")?.value||"You").trim()||"You"):"Mayhem Bot"):((($("playerName"+i)?.value||"").trim())||("Player "+(i+1))),hand:[],bot:isBotGame&&i===1,eliminated:false}));
