@@ -67,6 +67,15 @@ select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background
 .table{background:radial-gradient(ellipse at center,#187b58 0,#075038 72%,#033b2c 100%);border-color:#68452d;box-shadow:inset 0 0 45px #001f17a8,0 10px 25px #432b2540}
 @media(max-width:600px){.card{width:72px;height:108px}.card-symbol{font-size:35px}.card-caption{font-size:8px}.card-corner{font-size:8px}.pile .card{width:84px;height:124px}.hand{gap:7px}}
 
+
+/* Side-by-side rules reference: roomy center table with always-visible guides */
+.game-layout{display:grid;grid-template-columns:minmax(205px, .78fr) minmax(420px, 1.8fr) minmax(205px, .78fr);gap:16px;align-items:start}
+.game-main{min-width:0}.guide-panel{padding:16px;position:sticky;top:14px;max-height:calc(100vh - 28px);overflow:auto;border:1px solid #e7d2a5;background:linear-gradient(160deg,#fffaf0,#f3e7d2)}
+.guide-panel h2{font:800 19px "Playfair Display",serif;margin:0 0 4px;color:#392342}.guide-intro{font-size:11px;color:#907b6a;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 12px}
+.guide-item{padding:9px 0;border-top:1px solid #e8dac4;display:flex;flex-direction:column;gap:3px}.guide-item b{font-size:12px;color:#382442}.guide-item span{font-size:11px;line-height:1.4;color:#6d6061}.guide-foot{font-size:11px;line-height:1.45;color:#735d36;background:#f8edcf;padding:9px;border-radius:9px;margin:12px 0 0}
+@media(max-width:1100px){.game-layout{grid-template-columns:1fr 1fr}.game-main{grid-column:1/-1;grid-row:1}.guide-panel{position:static;max-height:none}.guide-panel:first-child{grid-column:1}.guide-panel:last-child{grid-column:2}}
+@media(max-width:650px){.game-layout{grid-template-columns:1fr;gap:12px}.game-main{grid-column:1;grid-row:1}.guide-panel:first-child,.guide-panel:last-child{grid-column:1}.guide-panel{position:static}.guide-panel h2{font-size:17px}.guide-item{padding:7px 0}}
+
 </style>
 </head>
 <body>
@@ -91,13 +100,41 @@ select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background
   <p class="info">Each player starts with 7 cards. Enter player names before starting. Only your own hand is shown; other players’ card backs are hidden.</p>
 </section>
 <section id="game">
-  <div class="topline"><div class="status" id="turnLabel">YOUR TURN</div><div class="status" id="directionLabel">Direction: →</div><button class="light" onclick="backToSetup()">NEW GAME</button></div>
-  <div class="table"><div class="opponents" id="opponents"></div><div class="table-center">
-    <div class="pile"><div class="pile-label">DRAW PILE</div><div class="card back" onclick="drawCard()">MM</div><div class="center-note" id="deckCount"></div></div>
-    <div class="pile"><div class="pile-label">PLAY PILE</div><div id="topCard"></div><div class="center-note" id="colorLabel"></div></div>
-  </div><div class="message" id="message">Good luck!</div></div>
-  <div class="controls"><button class="gold" id="drawButton" onclick="drawCard()">DRAW CARD</button><button class="primary" id="unoButton" onclick="callUno()">CALL UNO!</button><button class="danger" id="catchButton" onclick="catchUno()" disabled>CATCH UNO</button></div>
-  <div class="panel hand-panel"><div class="hand-heading"><h2 id="handTitle">YOUR HAND</h2><span class="status" id="handCount">0 cards</span></div><div class="hand" id="hand"></div><div class="info">Select a playable card. If you cannot play, draw a card. Wild cards let you choose the next color. Draw penalties stack only with an equal or higher draw card. At 25 cards, a player is eliminated.</div></div>
+  <div class="game-layout">
+    <aside class="guide-panel panel">
+      <h2>🃏 CARD GUIDE</h2><p class="guide-intro">What each card does</p>
+      <div class="guide-item"><b>⛔ Skip</b><span>Next player loses their turn.</span></div>
+      <div class="guide-item"><b>⇄ Reverse</b><span>Changes the direction of play. With 2 players, it also skips the opponent.</span></div>
+      <div class="guide-item"><b>+2 / +4 / +6 / +10</b><span>Next player draws that many cards unless they can stack a permitted draw card.</span></div>
+      <div class="guide-item"><b>⇄ +4 Reverse</b><span>Reverses direction and starts a 4-card draw penalty.</span></div>
+      <div class="guide-item"><b>🗑 Discard All</b><span>Discard every other card in your hand matching this card's color.</span></div>
+      <div class="guide-item"><b>♟ Skip Everyone</b><span>Everyone else is skipped; you play again.</span></div>
+      <div class="guide-item"><b>7 — Swap</b><span>Choose another active player and exchange hands.</span></div>
+      <div class="guide-item"><b>0 — Pass</b><span>All active players pass their hands in the current direction.</span></div>
+      <div class="guide-item"><b>🌈 Rainbow Roulette</b><span>Choose a color. Each opponent draws until they reveal that color.</span></div>
+      <div class="guide-item"><b>✦ Wild</b><span>Choose the color the next player must follow.</span></div>
+      <div class="guide-item"><b>UNO!</b><span>Call UNO when you have one card left. If caught before your next turn, draw 2.</span></div>
+    </aside>
+    <div class="game-main">
+      <div class="topline"><div class="status" id="turnLabel">YOUR TURN</div><div class="status" id="directionLabel">Direction: →</div><button class="light" onclick="backToSetup()">NEW GAME</button></div>
+      <div class="table"><div class="opponents" id="opponents"></div><div class="table-center">
+        <div class="pile"><div class="pile-label">DRAW PILE</div><div class="card back" onclick="drawCard()">MM</div><div class="center-note" id="deckCount"></div></div>
+        <div class="pile"><div class="pile-label">PLAY PILE</div><div id="topCard"></div><div class="center-note" id="colorLabel"></div></div>
+      </div><div class="message" id="message">Good luck!</div></div>
+      <div class="controls"><button class="gold" id="drawButton" onclick="drawCard()">DRAW CARD</button><button class="primary" id="unoButton" onclick="callUno()">CALL UNO!</button><button class="danger" id="catchButton" onclick="catchUno()" disabled>CATCH UNO</button></div>
+      <div class="panel hand-panel"><div class="hand-heading"><h2 id="handTitle">YOUR HAND</h2><span class="status" id="handCount">0 cards</span></div><div class="hand" id="hand"></div><div class="info">Select a playable card. If you cannot play, draw a card. Wild cards let you choose the next color. At 25 cards, a player is eliminated.</div></div>
+    </div>
+    <aside class="guide-panel panel">
+      <h2>📘 QUICK RULES</h2><p class="guide-intro">Keep these in mind</p>
+      <div class="guide-item"><b>Stacking</b><span>Play a draw card of equal or higher value than the current accumulated penalty. Otherwise, draw the full penalty.</span></div>
+      <div class="guide-item"><b>Draw cards</b><span>+2, +4, +6 and +10 add to the penalty total. +6 and +10 are rarer wild cards.</span></div>
+      <div class="guide-item"><b>Turn pace</b><span>Bot turns pause before playing so you can follow the action.</span></div>
+      <div class="guide-item"><b>Mercy Rule</b><span>Reach 25 cards and you are eliminated immediately.</span></div>
+      <div class="guide-item"><b>Winning</b><span>Be the first to empty your hand, or be the last player remaining after eliminations.</span></div>
+      <div class="guide-item"><b>Wild colors</b><span>After playing a Wild card, choose red, blue, green or yellow.</span></div>
+      <p class="guide-foot">Tip: Read the card name and the matching rule here before making your move.</p>
+    </aside>
+  </div>
 </section>
 </main>
 <div class="overlay" id="colorOverlay"><div class="dialog"><h2>CHOOSE A COLOR</h2><p>What color should the next player play?</p><div class="color-options"><button class="color-btn red" onclick="selectColor('red')" aria-label="Red"></button><button class="color-btn blue" onclick="selectColor('blue')" aria-label="Blue"></button><button class="color-btn green" onclick="selectColor('green')" aria-label="Green"></button><button class="color-btn yellow" onclick="selectColor('yellow')" aria-label="Yellow"></button></div></div></div>
@@ -151,8 +188,8 @@ function makeDeck(){
     d.push({color:"wild",value:"Wild"});
     d.push({color:"wild",value:"+4"});
     d.push({color:"wild",value:"Reverse +4"});
-    d.push({color:"wild",value:"+6"});
-    d.push({color:"wild",value:"+10"});
+    if(i<2) d.push({color:"wild",value:"+6"});
+    if(i<2) d.push({color:"wild",value:"+10"});
     d.push({color:"wild",value:"Rainbow Roulette"});
   }
   return shuffle(d);
@@ -390,7 +427,7 @@ function prepareTurn(){
   }
   const p=players[current];selected=null;waitingWild=false;handVisible=true;
   render();
-  if(p.bot)botTimer=setTimeout(botTurn,850);
+  if(p.bot)botTimer=setTimeout(botTurn,1500);
 }
 function callUno(){
   if(gameOver||!handVisible||players[current].hand.length!==1)return;
