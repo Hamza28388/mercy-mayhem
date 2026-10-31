@@ -61,8 +61,6 @@ select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background
   <div class="setup-row"><label><b>Players</b><br><select id="playerCount" onchange="renderNameFields()"><option value="1">1 Player vs Bot</option><option value="2">2 Players</option><option value="3">3 Players</option><option value="4">4 Players</option><option value="5">5 Players</option><option value="6">6 Players</option><option value="7">7 Players</option><option value="8">8 Players</option></select></label></div>
   <div class="name-fields" id="nameFields"></div>
   <button class="primary" onclick="startGame()">START LOCAL GAME →</button>
-  <button class="gold" onclick="createOnlineRoom()">CREATE ONLINE ROOM</button>
-  <button class="light" onclick="joinOnlineRoom()">JOIN ONLINE ROOM</button>
   <p class="info">Each player starts with 7 cards. Enter player names before starting. Only your own hand is shown; other players’ card backs are hidden.</p>
 </section>
 <section id="game">
@@ -72,357 +70,376 @@ select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background
     <div class="pile"><div class="pile-label">PLAY PILE</div><div id="topCard"></div><div class="center-note" id="colorLabel"></div></div>
   </div><div class="message" id="message">Good luck!</div></div>
   <div class="controls"><button class="gold" id="drawButton" onclick="drawCard()">DRAW CARD</button><button class="primary" id="unoButton" onclick="callUno()">CALL UNO!</button><button class="danger" id="catchButton" onclick="catchUno()" disabled>CATCH UNO</button></div>
-  <div class="panel hand-panel"><div class="hand-heading"><h2 id="handTitle">YOUR HAND</h2><span class="status" id="handCount">0 cards</span></div><div class="hand" id="hand"></div><div class="info">Select a playable card. If you cannot play, draw a card. Wild cards let you choose the next color. In local multiplayer, the active player sees their hand on the shared device.</div></div>
+  <div class="panel hand-panel"><div class="hand-heading"><h2 id="handTitle">YOUR HAND</h2><span class="status" id="handCount">0 cards</span></div><div class="hand" id="hand"></div><div class="info">Select a playable card. If you cannot play, draw a card. Wild cards let you choose the next color. Draw penalties stack only with an equal or higher draw card. At 25 cards, a player is eliminated.</div></div>
 </section>
 </main>
 <div class="overlay" id="colorOverlay"><div class="dialog"><h2>CHOOSE A COLOR</h2><p>What color should the next player play?</p><div class="color-options"><button class="color-btn red" onclick="selectColor('red')" aria-label="Red"></button><button class="color-btn blue" onclick="selectColor('blue')" aria-label="Blue"></button><button class="color-btn green" onclick="selectColor('green')" aria-label="Green"></button><button class="color-btn yellow" onclick="selectColor('yellow')" aria-label="Yellow"></button></div></div></div>
 <div class="overlay" id="endOverlay"><div class="dialog"><div style="font-size:50px">🏆</div><h2 id="endTitle">GAME OVER!</h2><p id="endText"></p><button class="primary" onclick="backToSetup()">PLAY AGAIN</button></div></div>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
 <script>
 "use strict";
-const firebaseConfig = {
-  apiKey: "AIzaSyBS_DTVrK2HHMXqGISkGPwLP_z7xsL5vQg",
-  authDomain: "hamza-9a738.firebaseapp.com",
-  databaseURL: "https://hamza-9a738-default-rtdb.firebaseio.com",
-  projectId: "hamza-9a738",
-  storageBucket: "hamza-9a738.firebasestorage.app",
-  messagingSenderId: "565843347412",
-  appId: "1:565843347412:web:864b3908fb6e3e38423841"
-};
 
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const database = firebase.database();
-  let currentUser = null;
+const COLORS = ["red","blue","green","yellow"];
+const DRAW_VALUES = {"+2":2,"+4":4,"+6":6,"+10":10,"Reverse +4":4};
+let players=[], deck=[], discard=[], current=0, direction=1, activeColor="red";
+let pendingUno=null, mustDraw=0, gameOver=false, waitingWild=false, selected=null;
+let isBotGame=false, botTimer=null, handVisible=true;
+const $ = id => document.getElementById(id);
 
-auth.signInAnonymously()
-  .then((result) => {
-    currentUser = result.user;
-    console.log("Connected to Firebase!");
-  })
-  .catch((error) => {
-    console.error("Firebase connection error:", error);
-  });
-const COLORS=["red","blue","green","yellow"], SYMBOLS=["Skip","Reverse","+2","+4","+6","+10","Reverse +4"];
-let players=[],deck=[],discard=[],current=0,direction=1,activeColor="red",pendingUno=null,mustDraw=0,waitingWild=false,gameOver=false,selected=null,botTimer=null;
-let handVisible=true, isBotGame=false;
-let onlineRoomId = null;
-let onlineRoomRef = null;
-let cardsSinceSpecial=0;
-let nextSpecialAt=10+Math.floor(Math.random()*6);
-const $=id=>document.getElementById(id);
-function closeIntro(){const v=$("introVideo");v.pause();$("introScreen").style.display="none";}
-function renderNameFields(){const n=Number($("playerCount").value);const box=$("nameFields");box.innerHTML="";const total=n===1?1:n;for(let i=0;i<total;i++){const label=n===1?"Your name":"Player "+(i+1)+" name";const input=document.createElement("input");input.type="text";input.maxLength=18;input.id="playerName"+i;input.placeholder=label;input.value=n===1?"You":"Player "+(i+1);input.setAttribute("aria-label",label);box.appendChild(input);}}
-$("introVideo").addEventListener("error",()=>{$("introVideo").style.display="none";$("introFallback").style.display="flex";});
-$("introVideo").addEventListener("ended",()=>{$("enterGame").style.display="block";
-renderNameFields();});
-$("enterGame").style.display="block";
-renderNameFields();
-
-function shuffle(array){
- for(let i=array.length-1;i>0;i--){
-   const j=Math.floor(Math.random()*(i+1));
-   [array[i],array[j]]=[array[j],array[i]];
- }
- return array;
+function closeIntro(){
+  const video=$("introVideo");
+  if(video) video.pause();
+  $("introScreen").style.display="none";
 }
-
-function makeDeck(){
- let d=[];
- COLORS.forEach(color=>{
-   d.push({color,value:"0"});
-   for(let n=1;n<=9;n++){
-     d.push({color,value:String(n)},{color,value:String(n)});
-   }
-   SYMBOLS.forEach(value=>{
-     const copies=["+4","+6","+10","Reverse +4"].includes(value)?1:2;
-     for(let i=0;i<copies;i++)d.push({color,value});
-   });
- });
- for(let i=0;i<4;i++){
-   d.push({color:"wild",value:"Wild"},{color:"wild",value:"+4"});
- }
- return shuffle(d);
-}
-
-function registerCardActivity(){
- cardsSinceSpecial++;
-
- if(cardsSinceSpecial>=nextSpecialAt){
-   const specials=["+4","+6","+10","Reverse +4"];
-   const value=specials[Math.floor(Math.random()*specials.length)];
-
-   deck.push({color:"wild",value});
-   shuffle(deck);
-
-   cardsSinceSpecial=0;
-   nextSpecialAt=10+Math.floor(Math.random()*6);
-   say("A special wild card has entered the deck!");
- }
-}
-async function createOnlineRoom(){
-  if(!currentUser){
-    alert("Connecting to server. Please try again.");
-    return;
+function renderNameFields(){
+  const count=Number($("playerCount").value), box=$("nameFields");
+  box.innerHTML="";
+  const total=count===1?1:count;
+  for(let i=0;i<total;i++){
+    const input=document.createElement("input");
+    input.type="text"; input.maxLength=18;
+    input.id="playerName"+i;
+    input.placeholder=count===1?"Your name":"Player "+(i+1)+" name";
+    input.value=count===1?"You":"Player "+(i+1);
+    box.appendChild(input);
   }
-
-  const roomId = Math.random().toString(36).substring(2,8).toUpperCase();
-
-  onlineRoomId = roomId;
-  onlineRoomRef = database.ref("rooms/" + roomId);
-
-  await onlineRoomRef.set({
-    host: currentUser.uid,
-    status: "waiting",
-    createdAt: Date.now()
+}
+function shuffle(a){
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+function makeDeck(){
+  const d=[];
+  COLORS.forEach(color=>{
+    d.push({color,value:"0"});
+    for(let n=1;n<=9;n++) d.push({color,value:String(n)},{color,value:String(n)});
+    ["Skip","Reverse","+2","Discard All","Skip Everyone"].forEach(value=>{
+      d.push({color,value},{color,value});
+    });
+    // The 7 and 0 number cards carry their special hand-swap/pass effects.
   });
-
-  alert("Your room code is: " + roomId);
-}  
+  for(let i=0;i<4;i++){
+    d.push({color:"wild",value:"Wild"});
+    d.push({color:"wild",value:"+4"});
+    d.push({color:"wild",value:"Reverse +4"});
+    d.push({color:"wild",value:"+6"});
+    d.push({color:"wild",value:"+10"});
+    d.push({color:"wild",value:"Rainbow Roulette"});
+  }
+  return shuffle(d);
+}
 function startGame(){
- clearTimeout(botTimer);const count=Number($("playerCount").value);isBotGame=count===1;const total=isBotGame?2:count;
- players=Array.from({length:total},(_,i)=>({name:isBotGame?(i===0?(($("playerName0")?.value||"You").trim()||"You"):"Mayhem Bot"):((($("playerName"+i)?.value||"").trim())||("Player "+(i+1))),hand:[],bot:isBotGame&&i===1,eliminated:false}));
- cardsSinceSpecial=0;
-nextSpecialAt=10+Math.floor(Math.random()*6);
-deck=makeDeck();discard=[];players.forEach(p=>{for(let i=0;i<7;i++)p.hand.push(deck.pop());});
- let first=deck.pop();while(first.color==="wild"){deck.unshift(first);first=deck.pop();}discard.push(first);activeColor=first.color;
- current=0;direction=1;pendingUno=null;mustDraw=0;waitingWild=false;gameOver=false;selected=null;handVisible=true;
- $("setup").style.display="none";$("game").style.display="block";$("colorOverlay").style.display="none";$("endOverlay").style.display="none";
- say("The mayhem begins!");prepareTurn();
+  clearTimeout(botTimer);
+  const count=Number($("playerCount").value);
+  isBotGame=count===1;
+  const total=isBotGame?2:count;
+  players=Array.from({length:total},(_,i)=>({
+    name:isBotGame?(i===0?(($("playerName0")?.value||"You").trim()||"You"):"Mayhem Bot"):
+      ((($("playerName"+i)?.value||"").trim())||("Player "+(i+1))),
+    hand:[],bot:isBotGame&&i===1,eliminated:false,saidUno:false
+  }));
+  deck=makeDeck(); discard=[];
+  players.forEach(p=>{for(let i=0;i<7;i++)p.hand.push(drawOne());});
+  let first=drawOne();
+  while(first && (first.color==="wild" || isAction(first))) {deck.unshift(first);first=drawOne();}
+  if(!first){first={color:"red",value:"1"};}
+  discard.push(first);activeColor=first.color;
+  current=0;direction=1;pendingUno=null;mustDraw=0;gameOver=false;
+  waitingWild=false;selected=null;handVisible=true;
+  $("setup").style.display="none";$("game").style.display="block";
+  $("colorOverlay").style.display="none";$("endOverlay").style.display="none";
+  say("The mayhem begins!");prepareTurn();
 }
-function backToSetup(){clearTimeout(botTimer);gameOver=true;$("endOverlay").style.display="none";$("colorOverlay").style.display="none";$("game").style.display="none";$("setup").style.display="block";}
+function backToSetup(){
+  clearTimeout(botTimer);gameOver=true;
+  $("endOverlay").style.display="none";$("colorOverlay").style.display="none";
+  $("game").style.display="none";$("setup").style.display="block";
+}
 function getTopCard(){return discard[discard.length-1];}
-function say(m){$("message").textContent=m;}
-function cardHTML(c){return `<div class="card ${c.color}" data-small="${c.value}">${c.value}</div>`;}
-function render(){
- if(!players.length)return;
-
- const p=players[current];
-const handOwner=isBotGame?players[0]:p;
-
- $("turnLabel").textContent=p.name+"'S TURN";
- $("directionLabel").textContent="Direction: "+(direction===1?"→":"←");
- $("deckCount").textContent=deck.length+" cards left";
-
- $("topCard").innerHTML=cardHTML(getTopCard());
- $("colorLabel").textContent="Current color: "+activeColor.toUpperCase();
-
- // Show player names and card counts, never their hands or card backs.
- $("opponents").innerHTML=players.map((x,i)=>i===current?"":`
- <div class="player ${x.eliminated?"eliminated":""}">
- <div class="avatar">${x.bot?"🤖":"😎"}</div>
- <div class="player-name">${escapeHTML(x.name)}</div>
- <div class="player-count">${x.eliminated?"ELIMINATED":x.hand.length+" cards"}</div>
- </div>`).join("");
-
- // Always show only the human player's own hand.
- $("handTitle").textContent="YOUR HAND";
- $("handCount").textContent=handOwner.hand.length+" cards";
-
- const h=$("hand");
- h.innerHTML="";
-
- handOwner.hand.forEach((c,i)=>{
-   const e=document.createElement("div");
-   e.innerHTML=cardHTML(c);
-   const el=e.firstElementChild;
-
-   const canControlHand=isBotGame?current===0:!p.bot;
-   if(!canControlHand||!canPlay(c))el.style.opacity=".65";
-
-   el.onclick=()=>{
-     if(!canControlHand)return;
-     playCard(i);
-   };
-
-   h.appendChild(el);
- });
-
- const humanTurn=!p.bot;
-
- $("drawButton").disabled=gameOver||!humanTurn;
- $("unoButton").disabled=gameOver||!humanTurn||handOwner.hand.length!==1;
- $("catchButton").disabled=!pendingUno||!humanTurn||pendingUno.player===current;
-}
+function say(message){$("message").textContent=message;}
 function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-function penaltyValue(c){
- return c.value==="Reverse +4"?4:
- ["+2","+4","+6","+10"].includes(c.value)?Number(c.value.slice(1)):0;
+function cardHTML(c){
+  const label=c.value==="Rainbow Roulette"?"ROULETTE":c.value;
+  return `<div class="card ${c.color}" data-small="${escapeHTML(label)}">${escapeHTML(label)}</div>`;
 }
-
+function isAction(c){
+  return ["Skip","Reverse","+2","Discard All","Skip Everyone"].includes(c.value) ||
+    Object.prototype.hasOwnProperty.call(DRAW_VALUES,c.value) || c.value==="Rainbow Roulette";
+}
+function activePlayers(){return players.map((p,i)=>!p.eliminated?i:-1).filter(i=>i>=0);}
+function nextActive(from,dir=direction){
+  const active=activePlayers(); if(active.length<2)return from;
+  let n=from;
+  for(let k=0;k<players.length;k++){
+    n=(n+dir+players.length)%players.length;
+    if(!players[n].eliminated)return n;
+  }
+  return from;
+}
+function penaltyValue(c){return DRAW_VALUES[c?.value]||0;}
 function canPlay(c){
- const top=getTopCard();
-
- if(mustDraw>0){
-   return penaltyValue(c)>0 && penaltyValue(top)>0;
- }
-
- if(penaltyValue(c)>0)return true;
-
- return c.color==="wild"||c.color===activeColor||c.value===top.value;
+  if(!c)return false;
+  if(mustDraw>0)return penaltyValue(c)>=mustDraw;
+  return c.color==="wild" || c.color===activeColor || c.value===getTopCard().value;
 }
-function recycleDeck(){if(deck.length||discard.length<=1)return;const top=discard.pop();deck=shuffle(discard);discard=[top];}
-function drawOne(){
- recycleDeck();
- const card=deck.length?deck.pop():null;
- if(card)registerCardActivity();
- return card;
+function render(){
+  if(!players.length)return;
+  const p=players[current], humanHand=isBotGame?players[0].hand:p.hand;
+  $("turnLabel").textContent=p.name+"'S TURN";
+  $("directionLabel").textContent="Direction: "+(direction===1?"→":"←");
+  $("deckCount").textContent=deck.length+" cards left";
+  $("topCard").innerHTML=cardHTML(getTopCard());
+  $("colorLabel").textContent="Current color: "+activeColor.toUpperCase()+(mustDraw?" · PENALTY: "+mustDraw:"");
+  $("opponents").innerHTML=players.map((x,i)=>i===current?"":`
+    <div class="player ${x.eliminated?"eliminated":""}">
+      <div class="avatar">${x.bot?"🤖":"😎"}</div>
+      <div class="player-name">${escapeHTML(x.name)}</div>
+      <div class="player-count">${x.eliminated?"ELIMINATED":x.hand.length+" cards"}</div>
+    </div>`).join("");
+  $("handTitle").textContent=isBotGame?"YOUR HAND":p.name.toUpperCase()+"'S HAND";
+  $("handCount").textContent=humanHand.length+" cards";
+  const h=$("hand");h.innerHTML="";
+  if(!isBotGame && p.bot){h.innerHTML="<div class='info'>Bot is taking its turn. Your hand stays hidden from other players.</div>";}
+  else humanHand.forEach((c,i)=>{
+    const wrap=document.createElement("div");wrap.innerHTML=cardHTML(c);
+    const el=wrap.firstElementChild;
+    if(!canPlay(c))el.style.opacity=".5";
+    el.onclick=()=>{if(!p.bot && (!isBotGame||current===0))playCard(i);};
+    h.appendChild(el);
+  });
+  const humanTurn=!p.bot;
+  $("drawButton").disabled=gameOver||!humanTurn||!handVisible;
+  $("unoButton").disabled=gameOver||!humanTurn||!handVisible||humanHand.length!==1;
+  $("catchButton").disabled=!pendingUno||!humanTurn||!handVisible||pendingUno.player===current;
+}
+function recycleDeck(){
+  if(deck.length||discard.length<=1)return;
+  const top=discard.pop();deck=shuffle(discard);discard=[top];
+}
+function drawOne(){recycleDeck();return deck.length?deck.pop():null;}
+function drawMany(player,n){
+  let drawn=0;
+  for(let i=0;i<n;i++){const c=drawOne();if(!c)break;player.hand.push(c);drawn++;}
+  checkElimination(players.indexOf(player));
+  return drawn;
+}
+function checkElimination(index){
+  const p=players[index];
+  if(p && !p.eliminated && p.hand.length>=25){
+    p.eliminated=true;say(p.name+" reached 25 cards and was eliminated!");
+    if(pendingUno?.player===index)pendingUno=null;
+  }
 }
 function drawCard(){
- if(gameOver||players[current].bot||!handVisible)return;
-
- const p=players[current];
- const n=mustDraw>0?mustDraw:1;
-
- for(let i=0;i<n;i++){
-   const c=drawOne();
-   if(c)p.hand.push(c);
- }
-
- say(p.name+" drew "+n+" cards.");
- checkElimination(p);
- mustDraw=0;
- pendingUno=null;
- advanceTurn();
+  if(gameOver||players[current].bot||!handVisible)return;
+  const p=players[current];
+  if(mustDraw){
+    const amount=mustDraw;drawMany(p,amount);
+    say(p.name+" drew the accumulated penalty of "+amount+" cards.");
+    mustDraw=0;pendingUno=null;advanceTurn();return;
+  }
+  let drawn=null, count=0;
+  // Draw until a playable card appears, then play it immediately.
+  while(deck.length || discard.length>1){
+    drawn=drawOne();if(!drawn)break;
+    p.hand.push(drawn);count++;
+    if(canPlay(drawn))break;
+  }
+  checkElimination(current);
+  if(p.eliminated){advanceTurn();return;}
+  const idx=p.hand.indexOf(drawn);
+  if(drawn && canPlay(drawn)){
+    say(p.name+" drew "+count+" card(s) and must play the playable card.");
+    playCard(idx);
+  } else {
+    say(p.name+" drew "+count+" card(s) and has no playable card.");
+    advanceTurn();
+  }
 }
-function playCard(i){
- if(gameOver||players[current].bot||!handVisible)return;
-
- const c=players[current].hand[i];
- if(!c||!canPlay(c))return;
-
- if(c.color==="wild"){
-   selected=i;
-   waitingWild=true;
-   $("colorOverlay").style.display="flex";
-   return;
- }
-
- finishPlay(i,null);
+function playCard(index){
+  if(gameOver||players[current].bot||!handVisible)return;
+  const c=players[current].hand[index];
+  if(!c||!canPlay(c))return;
+  if(c.color==="wild"){
+    selected=index;waitingWild=true;
+    $("colorOverlay").style.display="flex";return;
+  }
+  finishPlay(index,null);
 }
-function selectColor(c){if(!waitingWild)return;$("colorOverlay").style.display="none";waitingWild=false;finishPlay(selected,c);selected=null;}
+function selectColor(color){
+  if(!waitingWild)return;
+  $("colorOverlay").style.display="none";waitingWild=false;
+  finishPlay(selected,color);selected=null;
+}
 function rotateHands(){
- // A player passes their remaining hand to the next active seat in the current direction.
- const active=players.map((p,i)=>!p.eliminated?i:-1).filter(i=>i>=0);if(active.length<2)return;
- const old=players.map(p=>p.hand);const nextHands=old.map(h=>h);
- active.forEach(i=>{const recipient=active[(active.indexOf(i)+direction+active.length)%active.length];nextHands[recipient]=old[i];});
- players.forEach((p,i)=>{if(!p.eliminated)p.hand=nextHands[i];});
- say("ZERO! Everyone passed their hand in the "+(direction===1?"forward":"reverse")+" direction!");
+  const active=activePlayers();if(active.length<2)return;
+  const old=players.map(p=>p.hand.slice()), next=players.map(p=>p.hand);
+  active.forEach(i=>{
+    const recipient=active[(active.indexOf(i)+direction+active.length)%active.length];
+    next[recipient]=old[i];
+  });
+  players.forEach((p,i)=>{if(!p.eliminated)p.hand=next[i];});
+  say("ZERO! All active players passed their hands.");
 }
-function finishPlay(i,chosen){
- const p=players[current],c=p.hand.splice(i,1)[0];
-discard.push(c);
-registerCardActivity();
-activeColor=chosen||c.color;
-pendingUno=null;
- say(p.name+" played "+c.value+"!");
-if(c.value==="0"&&!isBotGame)rotateHands();
- if(p.hand.length===1)pendingUno={player:current};
- if(p.hand.length===0){endGame(p.name+" wins!");return;}
- checkElimination(p);
- if(penaltyValue(c)>0)mustDraw+=penaltyValue(c);
- let skip=0;
-if(c.value==="Reverse"||c.value==="Reverse +4"){
- direction*=-1;
- if(activeCount()===2)skip=1;
+function swapHand(playerIndex){
+  const target=prompt("Enter the player number to swap hands with:\n"+
+    activePlayers().filter(i=>i!==playerIndex).map(i=>(i+1)+". "+players[i].name).join("\n"));
+  if(target===null)return;
+  const idx=Number(target)-1;
+  if(!Number.isInteger(idx)||idx<0||idx>=players.length||idx===playerIndex||players[idx].eliminated){
+    alert("That player number is not valid.");return;
+  }
+  [players[playerIndex].hand,players[idx].hand]=[players[idx].hand,players[playerIndex].hand];
+  say(players[playerIndex].name+" swapped hands with "+players[idx].name+".");
+  checkElimination(playerIndex);checkElimination(idx);
 }
-if(c.value==="Skip")skip=1;
- advanceTurn(skip);
+function discardAllColor(player,c){
+  const matches=player.hand.filter(x=>x.color===c.color);
+  player.hand=player.hand.filter(x=>x.color!==c.color);
+  say(player.name+" discarded "+matches.length+" additional "+c.color+" card(s)!");
 }
-function checkElimination(p){
- if(p.hand.length>=25&&!p.eliminated){
-   p.eliminated=true;
-   say(p.name+" has reached 25 cards and is eliminated!");
-   return true;
- }
- return false;
+function rainbowRoulette(){
+  const chosen=activeColor;
+  const victims=activePlayers().filter(i=>i!==current);
+  victims.forEach(i=>{
+    let count=0,found=false;
+    while(!found){
+      const c=drawOne();if(!c)break;
+      players[i].hand.push(c);count++;
+      if(c.color===chosen)found=true;
+    }
+    say(players[i].name+" revealed "+count+" card(s) in Rainbow Roulette.");
+    checkElimination(i);
+  });
 }
-
-function activeCount(){
- return players.filter(p=>!p.eliminated).length;
+function finishPlay(index,chosenColor){
+  const player=players[current], card=player.hand.splice(index,1)[0];
+  discard.push(card);activeColor=chosenColor||card.color;pendingUno=null;
+  let skip=0, extraTurn=false;
+  say(player.name+" played "+card.value+"!");
+  if(card.value==="0")rotateHands();
+  if(card.value==="7")swapHand(current);
+  if(card.value==="Discard All")discardAllColor(player,card);
+  if(card.value==="Skip Everyone")extraTurn=true;
+  if(card.value==="Reverse")direction*=-1;
+  if(card.value==="Skip")skip=1;
+  if(card.value==="Reverse" && activePlayers().length===2)skip=1;
+  if(penaltyValue(card)){
+    if(card.value==="Reverse +4"){
+      direction*=-1;
+      if(activePlayers().length===2)skip=1;
+    }
+    mustDraw+=penaltyValue(card);
+  }
+  if(card.value==="Rainbow Roulette")rainbowRoulette();
+  checkElimination(current);
+  if(player.hand.length===0){endGame(player.name+" wins by playing their last card!");return;}
+  if(player.hand.length===1){pendingUno={player:current,called:false};}
+  if(player.eliminated){advanceTurn();return;}
+  if(extraTurn){prepareTurn();return;}
+  advanceTurn(skip);
 }
-
-function nextActive(from){
- let n=from;
- for(let k=0;k<players.length;k++){
-   n=(n+direction+players.length)%players.length;
-   if(!players[n].eliminated)return n;
- }
- return from;
-}
-function advanceTurn(skip=0){if(gameOver)return;let from=current;for(let i=0;i<=skip;i++)from=nextActive(from);current=from;prepareTurn();}
-function callUno(){if(gameOver||!handVisible||players[current].hand.length!==1)return;if(pendingUno&&pendingUno.player===current)pendingUno=null;say(players[current].name+" called UNO!");render();}
-function catchUno(){if(!pendingUno||pendingUno.player===current||!handVisible)return;const p=players[pendingUno.player];for(let i=0;i<2;i++){const c=drawOne();if(c)p.hand.push(c);}say(players[current].name+" caught "+p.name+"! They draw 2.");checkElimination(p);pendingUno=null;render();}
-function botTurn(){
- if(gameOver||!players[current].bot)return;const p=players[current];
- if(mustDraw){
- const stackOptions=p.hand.map((c,i)=>({c,i}))
-   .filter(x=>penaltyValue(x.c)>0 && penaltyValue(getTopCard())>0);
-
- if(!stackOptions.length){
-   const n=mustDraw;
-   for(let i=0;i<n;i++){
-     const c=drawOne();
-     if(c)p.hand.push(c);
-   }
-   mustDraw=0;
-  say("Mayhem Bot draws "+n+" cards!");
-checkElimination(p);
-advanceTurn();
-return;
- }
-}
- const options=p.hand.map((c,i)=>({c,i})).filter(x=>canPlay(x.c));
- if(!options.length){const c=drawOne();if(c)p.hand.push(c);say("Mayhem Bot draws a card.");checkElimination(p);advanceTurn();return;}
- options.sort((a,b)=>score(b.c)-score(a.c));const x=options[0],color=COLORS[Math.floor(Math.random()*COLORS.length)];finishBotPlay(x.i,color);
-}
-function score(c){
- return penaltyValue(c)>0?10+penaltyValue(c):
- c.color==="wild"?2:1;
-}
-function finishBotPlay(i,wildColor){
- const p=players[current],c=p.hand.splice(i,1)[0];
-discard.push(c);
-registerCardActivity();
-activeColor=c.color==="wild"?wildColor:c.color;
-pendingUno=null;
-say("Mayhem Bot played "+c.value+"!");
- if(c.value==="0"&&!isBotGame)rotateHands();if(p.hand.length===0){endGame("Mayhem Bot wins!");return;}checkElimination(p);
- if(penaltyValue(c)>0)mustDraw+=penaltyValue(c);
- let skip=0;
- if(c.value==="Reverse"||c.value==="Reverse +4"){
- direction*=-1;
- if(activeCount()===2)skip=1;
-}
-if(c.value==="Skip")skip=1;
-advanceTurn(skip);
+function advanceTurn(skip=0){
+  if(gameOver)return;
+  if(activePlayers().length<=1){
+    const winner=players.find(p=>!p.eliminated);
+    endGame(winner?winner.name+" wins by elimination!":"Nobody survived the mayhem!");return;
+  }
+  let from=current;
+  for(let i=0;i<=skip;i++)from=nextActive(from);
+  current=from;prepareTurn();
 }
 function prepareTurn(){
- if(gameOver)return;
-
- if(activeCount()<=1){
-   const winner=players.find(p=>!p.eliminated);
-   endGame(winner?winner.name+" wins!":"Game over!");
-   return;
- }
-
- render();
-
- if(players[current].bot){
-   clearTimeout(botTimer);
-   botTimer=setTimeout(botTurn,900);
- }
+  if(gameOver)return;
+  if(activePlayers().length<=1){
+    const winner=players.find(p=>!p.eliminated);
+    endGame(winner?winner.name+" wins!":"Nobody survived!");return;
+  }
+  const p=players[current];selected=null;waitingWild=false;handVisible=true;
+  render();
+  if(p.bot)botTimer=setTimeout(botTurn,850);
 }
-function endGame(m){
- gameOver=true;
- handVisible=false;
- $("endTitle").textContent="MAYHEM OVER!";
- $("endText").textContent=m;
- $("endOverlay").style.display="flex";
- render();
+function callUno(){
+  if(gameOver||!handVisible||players[current].hand.length!==1)return;
+  if(pendingUno?.player===current){pendingUno.called=true;say(players[current].name+" called UNO!");}
+  render();
 }
+function catchUno(){
+  if(!pendingUno||pendingUno.player===current||!handVisible)return;
+  const p=players[pendingUno.player];
+  if(pendingUno.called){say("UNO was called in time!");return;}
+  drawMany(p,2);say(players[current].name+" caught "+p.name+"! They draw 2 cards.");
+  pendingUno=null;render();
+}
+function botTurn(){
+  if(gameOver||!players[current].bot)return;
+  const p=players[current];
+  if(mustDraw){
+    const choices=p.hand.map((c,i)=>({c,i})).filter(x=>penaltyValue(x.c)>=mustDraw);
+    if(choices.length){
+      choices.sort((a,b)=>penaltyValue(a.c)-penaltyValue(b.c));
+      finishBotPlay(choices[0].i,COLORS[Math.floor(Math.random()*4)]);return;
+    }
+    const amount=mustDraw;drawMany(p,amount);mustDraw=0;
+    say("Mayhem Bot draws "+amount+" penalty cards.");advanceTurn();return;
+  }
+  let drawn=null,count=0;
+  while(deck.length||discard.length>1){
+    drawn=drawOne();if(!drawn)break;p.hand.push(drawn);count++;
+    if(canPlay(drawn))break;
+  }
+  checkElimination(current);
+  if(p.eliminated){advanceTurn();return;}
+  if(drawn&&canPlay(drawn)){
+    const i=p.hand.indexOf(drawn);
+    say("Mayhem Bot drew "+count+" and plays the playable card.");
+    finishBotPlay(i,COLORS[Math.floor(Math.random()*4)]);
+  }else{
+    say("Mayhem Bot drew "+count+" card(s).");advanceTurn();
+  }
+}
+function finishBotPlay(index,wildColor){
+  const p=players[current],c=p.hand.splice(index,1)[0];
+  discard.push(c);activeColor=c.color==="wild"?wildColor:c.color;pendingUno=null;
+  let skip=0,extra=false;
+  say("Mayhem Bot played "+c.value+"!");
+  if(c.value==="0")rotateHands();
+  if(c.value==="7"){
+    const targets=activePlayers().filter(i=>i!==current);
+    if(targets.length){const target=targets.sort((a,b)=>players[b].hand.length-players[a].hand.length)[0];[p.hand,players[target].hand]=[players[target].hand,p.hand];}
+  }
+  if(c.value==="Discard All")discardAllColor(p,c);
+  if(c.value==="Skip Everyone")extra=true;
+  if(c.value==="Reverse")direction*=-1;
+  if(c.value==="Skip")skip=1;
+  if(c.value==="Reverse"&&activePlayers().length===2)skip=1;
+  if(penaltyValue(c)){
+    if(c.value==="Reverse +4"){direction*=-1;if(activePlayers().length===2)skip=1;}
+    mustDraw+=penaltyValue(c);
+  }
+  if(c.value==="Rainbow Roulette")rainbowRoulette();
+  checkElimination(current);
+  if(p.hand.length===0){endGame("Mayhem Bot wins!");return;}
+  if(p.hand.length===1)pendingUno={player:current,called:false};
+  if(p.eliminated){advanceTurn();return;}
+  if(extra){prepareTurn();return;}
+  advanceTurn(skip);
+}
+function endGame(message){
+  gameOver=true;clearTimeout(botTimer);
+  $("endTitle").textContent="MAYHEM OVER!";
+  $("endText").textContent=message;
+  $("endOverlay").style.display="flex";
+  render();
+}
+$("introVideo")?.addEventListener("error",()=>{
+  $("introVideo").style.display="none";$("introFallback").style.display="flex";
+});
+$("introVideo")?.addEventListener("ended",()=>{$("enterGame").style.display="block";});
+$("enterGame").style.display="block";
+renderNameFields();
 </script>
 </body>
 </html>
