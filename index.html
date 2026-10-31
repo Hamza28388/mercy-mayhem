@@ -151,7 +151,7 @@ function render(){
  if(!players.length)return;
 
  const p=players[current];
-const handOwner=players[0];
+const handOwner=isBotGame?players[0]:p;
 
  $("turnLabel").textContent=p.name+"'S TURN";
  $("directionLabel").textContent="Direction: "+(direction===1?"→":"←");
