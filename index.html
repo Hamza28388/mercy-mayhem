@@ -229,7 +229,7 @@ let picked=-1, unoHold=false, unoTimer=null, unoSkip=0, endMessage="";
 const panelState={guide:true,rules:true};
 const $ = id => document.getElementById(id);
 // Firebase online rooms — shared room state is readable by room participants.
-const firebaseConfig={apiKey:"AIzaSyBS_DTVrK2HHMXqGISGPwLP_z7xsL5vQg",authDomain:"hamza-9a738.firebaseapp.com",databaseURL:"https://hamza-9a738-default-rtdb.firebaseio.com",projectId:"hamza-9a738",storageBucket:"hamza-9a738.firebasestorage.app",messagingSenderId:"565843347412",appId:"1:565843347412:web:864b3908fb6e3e38423841"};
+const firebaseConfig={apiKey: "AIzaSyBS_DTVrK2HHMXqGISkGPwLP_z7xsL5vQg",authDomain:"hamza-9a738.firebaseapp.com",databaseURL:"https://hamza-9a738-default-rtdb.firebaseio.com",projectId:"hamza-9a738",storageBucket:"hamza-9a738.firebasestorage.app",messagingSenderId:"565843347412",appId:"1:565843347412:web:864b3908fb6e3e38423841"};
 let onlineEnabled=false,onlineReady=false,onlineRoom="",onlineUid="",onlineSeat=-1,onlineHost=false,onlineRef=null,applyingRemote=false,publishTimer=null;
 try{if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);firebase.auth().signInAnonymously().then(u=>{onlineUid=u.user.uid;onlineReady=true;$('onlineStatus').textContent='Online service connected. Create or join a room.';}).catch(e=>$('onlineStatus').textContent='Online sign-in error: '+e.message);}catch(e){$('onlineStatus').textContent='Firebase could not start: '+e.message;}
 function makeRoomCode(){return Math.random().toString(36).slice(2,8).toUpperCase();}
