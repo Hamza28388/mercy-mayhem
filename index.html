@@ -31,13 +31,11 @@ select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background
 .online-box{margin:18px auto 0;padding:16px;background:#f5ead7;border:1px solid #dfc99f;border-radius:14px;max-width:520px}
 .online-box input{max-width:180px}.room-code{font-size:24px;font-weight:900;letter-spacing:5px;color:#5b321f}
 .info{color:#75666c;font-size:12px;line-height:1.5;margin-top:12px}
-
 /* Game screen */
 #game{display:none}
 .topline{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:15px}
 .topbtns{display:flex;gap:8px;flex-wrap:wrap}.topbtns button{padding:9px 14px;font-size:13px}.topbtns .light{background:#3a2850;color:#f9e7b4;border:1px solid #7a5d2c}.topbtns .light:last-child{background:linear-gradient(180deg,#ffd978,#d99a25);color:#2b1a05;border-color:#fff1c2}
 .status{background:linear-gradient(180deg,#3a2650,#271b31);color:#f9e7b4;border:1px solid #7a5d2c;border-radius:12px;padding:9px 15px;font-weight:900;font-size:14px;box-shadow:0 3px 8px #2a12303a}
-
 /* Layout with independently hideable side panels */
 .game-layout{display:grid;grid-template-columns:215px minmax(0,1fr) 215px;gap:12px;align-items:start}
 .game-layout.hide-guide{grid-template-columns:minmax(0,1fr) 215px}
@@ -53,7 +51,6 @@ select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background
 .guide-item{padding:6px 0;border-top:1px solid #45335a;display:flex;flex-direction:column;gap:2px}
 .guide-item b{font-size:10.5px;color:#f9e7b4}.guide-item span{font-size:9.5px;line-height:1.3;color:#c9bcd6}
 .guide-foot{font-size:9.5px;line-height:1.35;color:#f2d994;background:#f5c65b1c;border:1px solid #f5c65b44;padding:7px;border-radius:8px;margin:8px 0 0}
-
 /* Table */
 .table{display:flex;flex-direction:column;gap:6px;background-color:#6b3f22;background-image:repeating-linear-gradient(92deg,#0000 0 3px,#0000001a 3px 4px,#0000 4px 11px,#ffffff0a 11px 12px),repeating-linear-gradient(88deg,#0000 0 46px,#2a140a2e 47px 50px),radial-gradient(ellipse at 50% 38%,#ffffff22,#0000 62%),linear-gradient(120deg,#9b633b,#5e3420 50%,#8f5a35);border:12px solid #3b241d;border-radius:36px;padding:16px 18px 12px;color:white;box-shadow:0 0 0 2px #c9993e,0 18px 40px #2a123066,inset 0 0 0 2px #d39b58,inset 0 0 70px #1d0e07aa}
 .opponents{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
@@ -65,7 +62,6 @@ select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background
 .center-note{font-size:12px;color:#f6ecd2;text-shadow:0 1px 3px #000a;margin-top:12px}
 .controls{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:4px 0}.controls button{white-space:nowrap;border:1px solid var(--gold);color:#f9e7b4;background:linear-gradient(180deg,#4a2f63,#2a1a3b);box-shadow:0 4px 0 #150c1f,0 8px 14px #0006;padding:11px 20px;letter-spacing:.5px}.controls #drawButton{background:linear-gradient(180deg,#ffd978,#d99a25);color:#2b1a05;border-color:#fff1c2}.controls #catchButton{background:linear-gradient(180deg,#8a2a4a,#4e1329)}.controls button:hover{transform:none;filter:brightness(1.12)}.controls button:active:not(:disabled){transform:translateY(2px);box-shadow:0 2px 0 #150c1f}
 .message{min-height:25px;text-align:center;font-weight:900;color:#fff0bd;text-shadow:0 2px 4px #000a;margin:2px 0}
-
 /* Cards (glossy signature design) — sizes scale from --cw */
 .card{width:var(--cw);height:calc(var(--cw)*1.5);border:3px solid #fffdf5;border-radius:calc(var(--cw)*.17);overflow:hidden;isolation:isolate;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#fff;font-family:Nunito,Arial,sans-serif;font-size:17px;font-weight:900;box-shadow:0 7px 0 #0003,0 12px 18px #0006,inset 0 0 0 1px #ffffff70;text-shadow:0 2px 3px #000b;transform:rotate(-2deg);flex-shrink:0;animation:pop .16s ease-out}
 .card:before{content:"";position:absolute;z-index:-1;inset:10% 8%;border:3px solid #ffffffa8;border-radius:48% 42% 48% 42%;transform:rotate(-28deg);box-shadow:0 0 0 3px #ffffff22,inset 0 0 12px #fff5;pointer-events:none}
@@ -87,7 +83,6 @@ select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background
 .card-symbol{z-index:1;font-size:calc(var(--cw)*.49);line-height:1;font-weight:900;letter-spacing:-2px;color:inherit;-webkit-text-stroke:1px #171018;text-shadow:2px 3px 0 #0008,0 0 9px #fff6}
 .card-caption{z-index:1;max-width:90%;font-size:max(6px,calc(var(--cw)*.105));line-height:1.05;font-weight:900;text-align:center;letter-spacing:.2px;padding:3px 4px;border-radius:5px;background:#09070cb5;color:white;text-shadow:0 1px 2px #000}
 .card.yellow .card-caption{background:#422900d9;color:white}
-
 /* Player hand: compact overlapping fan at the bottom, no hover movement */
 .hand-panel{margin-top:auto;padding:0;overflow:hidden}
 .hand-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:0 6px}.hand-heading h2{font-family:"Playfair Display",serif;margin:0;font-size:17px;color:#f9e7b4;text-shadow:0 2px 4px #000a}.hand-panel .info{color:#ecd9b4;text-align:center;margin:0;padding:0 8px;opacity:.85}
@@ -99,7 +94,6 @@ select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background
 .hand .card.playable{box-shadow:0 0 0 2px var(--gold),0 5px 0 #0003,0 8px 14px #0007,inset 0 0 0 1px #ffffff70}
 .hand .card.picked{z-index:150!important;box-shadow:0 0 0 4px var(--gold),0 0 18px #f5c65bcc,0 8px 14px #0007}
 .hand .card.dim{opacity:.62}
-
 /* Dialogs and intro */
 .overlay{position:fixed;inset:0;background:#170f20e8;z-index:20;display:none;align-items:center;justify-content:center;padding:20px}
 .dialog{background:var(--cream);border-radius:22px;padding:28px;max-width:460px;width:100%;text-align:center;box-shadow:0 20px 60px #0007}.dialog h2{font-family:"Playfair Display",serif}
@@ -111,7 +105,6 @@ select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background
 .intro-title{font:800 clamp(38px,8vw,82px) "Playfair Display",serif;letter-spacing:3px;color:var(--gold);text-shadow:0 5px 25px #000}
 #enterGame{position:absolute;z-index:2;bottom:8%;padding:16px 38px;background:var(--gold);color:#211326;border:2px solid #fff1c2;border-radius:12px;font-size:18px;font-weight:900}
 @keyframes pop{from{transform:scale(.8);opacity:.5}to{transform:scale(1);opacity:1}}
-
 @media(max-height:900px) and (min-width:651px){.hand-panel .info{display:none}}
 @media(max-width:1050px){
   .game-layout,.game-layout.hide-guide,.game-layout.hide-rules,.game-layout.hide-guide.hide-rules{grid-template-columns:1fr 1fr}
@@ -217,7 +210,6 @@ select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background
 <div class="overlay" id="endOverlay"><div class="dialog"><div style="font-size:50px">🏆</div><h2 id="endTitle">GAME OVER!</h2><p id="endText"></p><button class="primary" onclick="backToSetup()">PLAY AGAIN</button></div></div>
 <script>
 "use strict";
-
 const COLORS = ["red","blue","green","yellow"];
 const DRAW_VALUES = {"+2":2,"+4":4,"+6":6,"+10":10,"Reverse +4":4};
 let players=[], deck=[], discard=[], current=0, direction=1, activeColor="red";
@@ -270,7 +262,6 @@ function applyOnlineState(st){
   else $('endOverlay').style.display='none';
   render();applyingRemote=false;
 }
-
 function closeIntro(){
   const video=$("introVideo");
   if(video) video.pause();
@@ -315,12 +306,10 @@ function makeDeck(){
   }
   return shuffle(d);
 }
-
 function startLocalGame(){
   leaveOnline();
   startGame();
 }
-
 function startGame(){
   clearInterval(botTimer);
   const count=Number($("playerCount").value);
@@ -343,14 +332,12 @@ function startGame(){
   waitingWild=false;
   selected=null;
   picked=-1;
-
   // Deal 7 cards
   for(let r=0;r<7;r++){
     players.forEach(p=>{
       if(deck.length>0) p.hand.push(deck.pop());
     });
   }
-
   // Start top card (ensure it's not a wild/special if possible, or just take top)
   let top=deck.pop();
   while(top.color==="wild"||DRAW_VALUES[top.value]!==undefined){
@@ -367,7 +354,6 @@ function startGame(){
   render();
   checkBotTurn();
 }
-
 function backToSetup(){
   leaveOnline();
   clearInterval(botTimer);
@@ -375,7 +361,6 @@ function backToSetup(){
   $("setup").style.display="block";
   $("endOverlay").style.display="none";
 }
-
 function togglePanel(which){
   if(which==='guide'){
     panelState.guide=!panelState.guide;
@@ -387,7 +372,6 @@ function togglePanel(which){
     $("toggleRules").textContent=panelState.rules?"Hide Quick Rules":"Show Quick Rules";
   }
 }
-
 function isPlayable(card){
   const top=discard[discard.length-1];
   if(mustDraw>0){
@@ -398,14 +382,12 @@ function isPlayable(card){
   if(card.value===top.value) return true;
   return false;
 }
-
 function renderCard(card, index=-1, isHand=false){
   const el=document.createElement("div");
   let colClass=card.color;
   el.className=`card ${colClass}`;
   if(index>=0 && isHand && picked===index) el.classList.add("picked");
   if(index>=0 && isHand && isPlayable(card)) el.classList.add("playable");
-
   let symbol="🃏";
   let caption=card.value;
   if(card.value==="Skip") symbol="⛔";
@@ -420,7 +402,6 @@ function renderCard(card, index=-1, isHand=false){
   else if(card.value==="Wild") symbol="✦";
   else if(card.value==="Rainbow Roulette") symbol="🌈";
   else symbol=card.value;
-
   el.innerHTML=`
     <div class="card-corner top">${card.value}</div>
     <div class="card-symbol">${symbol}</div>
@@ -429,7 +410,6 @@ function renderCard(card, index=-1, isHand=false){
   `;
   return el;
 }
-
 function render(){
   // Update turn & direction
   const activeP=players[current];
@@ -437,14 +417,12 @@ function render(){
   $("directionLabel").textContent="Direction: "+(direction===1?"→":"←");
   $("deckCount").textContent=deck.length+" left";
   $("colorLabel").textContent="Color: "+activeColor.toUpperCase();
-
   // Render opponents
   const oppBox=$("opponents");
   oppBox.innerHTML="";
   players.forEach((p,i)=>{
     if(onlineEnabled && i===onlineSeat) return; // In online mode, handle self separately or list all
     if(!onlineEnabled && i===0) return; // Local human is at bottom
-
     const div=document.createElement("div");
     div.className="player"+(i===current?" active":"")+(p.eliminated?" eliminated":"");
     div.innerHTML=`
@@ -455,20 +433,17 @@ function render(){
     `;
     oppBox.appendChild(div);
   });
-
   // Render Top Card
   const topBox=$("topCard");
   topBox.innerHTML="";
   if(discard.length>0){
     topBox.appendChild(renderCard(discard[discard.length-1]));
   }
-
   // Render Hand
   const myIndex=onlineEnabled?onlineSeat:0;
   const me=players[myIndex]||players[0];
   $("handTitle").textContent=onlineEnabled?(me.name+"'s Hand"):"YOUR HAND";
   $("handCount").textContent=(me?me.hand.length:0)+" cards";
-  
   const handBox=$("hand");
   handBox.innerHTML="";
   if(me && me.hand){
@@ -478,27 +453,23 @@ function render(){
       handBox.appendChild(cEl);
     });
   }
-
   // Catch Uno button
   const catchBtn=$("catchButton");
   catchBtn.disabled=!pendingUno;
 
   publishOnlineState();
 }
-
 function onCardClick(idx){
   if(gameOver)return;
   const myIndex=onlineEnabled?onlineSeat:0;
   if(current!==myIndex && !onlineEnabled) return;
   if(onlineEnabled && current!==onlineSeat) return;
-
   const me=players[current];
   const card=me.hand[idx];
   if(!isPlayable(card)){
     $("message").textContent="Cannot play that card!";
     return;
   }
-
   if(picked===idx){
     playCard(idx);
     picked=-1;
@@ -507,25 +478,21 @@ function onCardClick(idx){
     render();
   }
 }
-
 function playCard(idx){
   const p=players[current];
   const card=p.hand.splice(idx,1)[0];
   discard.push(card);
-
   // Check Mercy rule (25 cards)
   if(p.hand.length>=25){
     p.eliminated=true;
     endGame(p.name+" reached 25 cards and was eliminated by the Mercy Rule!");
     return;
   }
-
   // Check Win
   if(p.hand.length===0){
     endGame(p.name+" emptied their hand and wins the game!");
     return;
   }
-
   // Handle special effects
   let advance=true;
   if(card.color==="wild"){
@@ -537,7 +504,6 @@ function playCard(idx){
       if(card.value==="Rainbow Roulette"){
         // opponent draw until color
       }
-
       if(p.isBot||(onlineEnabled && p.uid!==onlineUid)){
         // Bot / remote chooses random color
         activeColor=COLORS[Math.floor(Math.random()*COLORS.length)];
@@ -569,23 +535,19 @@ function playCard(idx){
       p.hand=p.hand.filter(c=>c.color!==card.color);
     }
   }
-
   finishTurnAfterPlay(advance);
 }
-
 function selectColor(col){
   activeColor=col;
   $("colorOverlay").style.display="none";
   waitingWild=false;
   finishTurnAfterPlay(true);
 }
-
 function finishTurnAfterPlay(advance){
   if(advance) advanceTurn();
   render();
   checkBotTurn();
 }
-
 function advanceTurn(){
   let steps=0;
   do{
@@ -594,13 +556,11 @@ function advanceTurn(){
     if(steps>players.length) break;
   } while(players[current].eliminated);
 }
-
 function drawCard(){
   if(gameOver)return;
   const myIndex=onlineEnabled?onlineSeat:0;
   if(current!==myIndex && !onlineEnabled) return;
   if(onlineEnabled && current!==onlineSeat) return;
-
   const p=players[current];
   if(mustDraw>0){
     for(let i=0;i<mustDraw;i++){
@@ -621,14 +581,12 @@ function drawCard(){
   render();
   checkBotTurn();
 }
-
 function refillDeck(){
   if(discard.length<=1) return;
   const top=discard.pop();
   deck=shuffle(discard);
   discard=[top];
 }
-
 function swapHands(idx){
   const target=(idx+1)%players.length;
   const temp=players[idx].hand;
@@ -636,7 +594,6 @@ function swapHands(idx){
   players[target].hand=temp;
   $("message").textContent="Hands swapped!";
 }
-
 function passHands(){
   const firstHand=players[0].hand;
   for(let i=0;i<players.length-1;i++){
@@ -645,14 +602,12 @@ function passHands(){
   players[players.length-1].hand=firstHand;
   $("message").textContent="All hands passed!";
 }
-
 function callUno(){
   const myIndex=onlineEnabled?onlineSeat:0;
   pendingUno=myIndex;
   $("message").textContent=players[myIndex].name+" called UNO!";
   setTimeout(()=>{ if(pendingUno===myIndex) pendingUno=null; }, 4000);
 }
-
 function catchUno(){
   if(pendingUno!==null && pendingUno!==current){
     const target=players[pendingUno];
@@ -665,7 +620,6 @@ function catchUno(){
     render();
   }
 }
-
 function endGame(msg){
   gameOver=true;
   endMessage=msg;
@@ -674,7 +628,6 @@ function endGame(msg){
   $("endOverlay").style.display="flex";
   render();
 }
-
 function checkBotTurn(){
   if(gameOver||!isBotGame) return;
   const p=players[current];
@@ -685,7 +638,6 @@ function checkBotTurn(){
     }, 1200);
   }
 }
-
 function botPlay(){
   const p=players[current];
   if(mustDraw>0){
@@ -700,14 +652,12 @@ function botPlay(){
     checkBotTurn();
     return;
   }
-
   // Find playable card
   const playableIdx=p.hand.findIndex(c=>isPlayable(c));
   if(playableIdx>=0){
     const card=p.hand.splice(playableIdx,1)[0];
     discard.push(card);
     $("message").textContent=p.name+" played "+card.value+" ("+card.color+").";
-
     if(p.hand.length>=25){
       p.eliminated=true;
       endGame(p.name+" reached 25 cards and was eliminated!");
@@ -717,7 +667,6 @@ function botPlay(){
       endGame(p.name+" wins!");
       return;
     }
-
     if(card.color==="wild"){
       activeColor=COLORS[Math.floor(Math.random()*COLORS.length)];
       if(card.value==="+4") mustDraw+=4;
