@@ -112,6 +112,7 @@ select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background
 #enterGame{position:absolute;z-index:2;bottom:8%;padding:16px 38px;background:var(--gold);color:#211326;border:2px solid #fff1c2;border-radius:12px;font-size:18px;font-weight:900}
 @keyframes pop{from{transform:scale(.8);opacity:.5}to{transform:scale(1);opacity:1}}
 
+/* Tablet: table on top, the two panels side by side underneath */
 @media(max-height:900px) and (min-width:651px){.hand-panel .info{display:none}}
 @media(max-width:1050px){
   .game-layout,.game-layout.hide-guide,.game-layout.hide-rules,.game-layout.hide-guide.hide-rules{grid-template-columns:1fr 1fr}
@@ -121,6 +122,7 @@ select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background
   .game-layout.hide-guide.hide-rules .game-main{grid-column:1/-1}
   .pile{--cw:96px}
 }
+/* Phones */
 @media(max-width:650px){
   header{padding:8px 12px;border-bottom-width:3px}header>div:last-child{display:none}.brand{font-size:20px}.tagline{font-size:9px;letter-spacing:2px}
   main{padding:8px}.panel{padding:12px;border-radius:16px}
@@ -166,7 +168,6 @@ select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background
     <div class="setup-row"><button class="gold" onclick="createOnlineRoom()">CREATE ROOM</button><input id="joinCode" maxlength="6" placeholder="ROOM CODE" style="text-transform:uppercase"><button class="primary" onclick="joinOnlineRoom()">JOIN ROOM</button></div>
     <div id="onlineStatus" class="info">Connecting to online services…</div>
     <div id="roomInfo" class="room-code"></div>
-    <button id="shareLinkBtn" class="gold" style="display:none; margin:10px auto;" onclick="shareRoomLink()">📋 COPY ROOM LINK</button>
     <button id="onlineStart" class="primary" style="display:none" onclick="startOnlineGame()">START ONLINE GAME →</button>
   </div>
   <p class="info">Each player starts with 7 cards. Enter player names before starting. Only your own hand is shown; other players’ card backs are hidden.</p>
@@ -227,64 +228,19 @@ let isBotGame=false, botTimer=null, handVisible=true;
 let picked=-1, unoHold=false, unoTimer=null, unoSkip=0, endMessage="";
 const panelState={guide:true,rules:true};
 const $ = id => document.getElementById(id);
+// Firebase online rooms — shared room state is readable by room participants.
 const firebaseConfig={apiKey: "AIzaSyBS_DTVrK2HHMXqGISkGPwLP_z7xsL5vQg",authDomain:"hamza-9a738.firebaseapp.com",databaseURL:"https://hamza-9a738-default-rtdb.firebaseio.com",projectId:"hamza-9a738",storageBucket:"hamza-9a738.firebasestorage.app",messagingSenderId:"565843347412",appId:"1:565843347412:web:864b3908fb6e3e38423841"};
 let onlineEnabled=false,onlineReady=false,onlineRoom="",onlineUid="",onlineSeat=-1,onlineHost=false,onlineRef=null,applyingRemote=false,publishTimer=null;
-
-try{
-  if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
-  firebase.auth().signInAnonymously().then(u=>{
-    onlineUid=u.user.uid;
-    onlineReady=true;
-    $('onlineStatus').textContent='Online service connected. Create or join a room.';
-    
-    const urlParams = new URLSearchParams(window.location.search);
-    const roomParam = urlParams.get('room');
-    if(roomParam){
-      $('joinCode').value = roomParam.toUpperCase();
-      $('onlineStatus').textContent='Room code loaded from link! Enter your name and click JOIN ROOM.';
-    }
-  }).catch(e=>$('onlineStatus').textContent='Online sign-in error: '+e.message);
-}catch(e){$('onlineStatus').textContent='Firebase could not start: '+e.message;}
-
+try{if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);firebase.auth().signInAnonymously().then(u=>{onlineUid=u.user.uid;onlineReady=true;$('onlineStatus').textContent='Online service connected. Create or join a room.';}).catch(e=>$('onlineStatus').textContent='Online sign-in error: '+e.message);}catch(e){$('onlineStatus').textContent='Firebase could not start: '+e.message;}
 function makeRoomCode(){return Math.random().toString(36).slice(2,8).toUpperCase();}
-
 function leaveOnline(){
   try{if(onlineRef)onlineRef.off();}catch(e){}
   clearTimeout(publishTimer);
   onlineEnabled=false;onlineRef=null;onlineRoom="";onlineSeat=-1;onlineHost=false;
-  $('roomInfo').textContent='';
-  $('onlineStart').style.display='none';
-  $('shareLinkBtn').style.display='none';
+  $('roomInfo').textContent='';$('onlineStart').style.display='none';
   if(onlineReady)$('onlineStatus').textContent='Online service connected. Create or join a room.';
 }
-
-async function createOnlineRoom(){
-  if(!onlineReady)return alert('Please wait for online connection.');
-  leaveOnline();
-  const code=makeRoomCode();
-  onlineRoom=code;
-  onlineHost=true;
-  onlineSeat=0;
-  onlineEnabled=true;
-  onlineRef=firebase.database().ref('rooms/'+code);
-  await onlineRef.set({host:onlineUid,status:'lobby',players:[{uid:onlineUid,name:(($('playerName0')?.value||'You').trim()||'You')}],createdAt:firebase.database.ServerValue.TIMESTAMP});
-  listenOnlineRoom();
-  $('roomInfo').textContent='ROOM: '+code;
-  $('onlineStatus').textContent='Room created. Share this link with your friend!';
-  $('onlineStart').style.display='inline-block';
-  $('shareLinkBtn').style.display='inline-block';
-}
-
-function shareRoomLink(){
-  if(!onlineRoom) return;
-  const shareUrl = window.location.origin + window.location.pathname + '?room=' + onlineRoom;
-  navigator.clipboard.writeText(shareUrl).then(() => {
-    alert('Room link copied to clipboard! Send this link to your friend:\n\n' + shareUrl);
-  }).catch(err => {
-    prompt('Copy this room link:', shareUrl);
-  });
-}
-
+async function createOnlineRoom(){if(!onlineReady)return alert('Please wait for online connection.');leaveOnline();const code=makeRoomCode();onlineRoom=code;onlineHost=true;onlineSeat=0;onlineEnabled=true;onlineRef=firebase.database().ref('rooms/'+code);await onlineRef.set({host:onlineUid,status:'lobby',players:[{uid:onlineUid,name:(($('playerName0')?.value||'You').trim()||'You')}],createdAt:firebase.database.ServerValue.TIMESTAMP});listenOnlineRoom();$('roomInfo').textContent='ROOM: '+code;$('onlineStatus').textContent='Room created. Share this code with friends.';$('onlineStart').style.display='inline-block';}
 async function joinOnlineRoom(){
   if(!onlineReady)return alert('Please wait for online connection.');
   const code=($('joinCode').value||'').trim().toUpperCase();
@@ -351,6 +307,7 @@ function makeDeck(){
     ["Skip","Reverse","+2","Discard All","Skip Everyone"].forEach(value=>{
       d.push({color,value},{color,value});
     });
+    // The 7 and 0 number cards carry their special hand-swap/pass effects.
   });
   for(let i=0;i<4;i++){
     d.push({color:"wild",value:"Wild"});
@@ -362,415 +319,504 @@ function makeDeck(){
   }
   return shuffle(d);
 }
-
-function startLocalGame(){
-  leaveOnline();
-  startGame();
-}
-
+function startLocalGame(){leaveOnline();startGame();}
 function startGame(){
-  clearInterval(botTimer);
+  clearTimeout(botTimer);clearTimeout(unoTimer);unoHold=false;picked=-1;endMessage="";
   const count=Number($("playerCount").value);
-  isBotGame=(count===1);
-  const realCount=isBotGame?2:count;
-  players=[];
-  for(let i=0;i<realCount;i++){
-    const nameEl=$("playerName"+i);
-    const name=nameEl?(nameEl.value.trim()||("Player "+(i+1))):("Player "+(i+1));
-    const isBot=isBotGame&&(i===1);
-    players.push({name,isBot,hand:[],eliminated:false});
-  }
-  deck=makeDeck();
-  discard=[];
-  current=0;
-  direction=1;
-  mustDraw=0;
-  pendingUno=null;
-  gameOver=false;
-  waitingWild=false;
-  selected=null;
-  picked=-1;
-
-  for(let r=0;r<7;r++){
-    players.forEach(p=>{
-      if(deck.length>0) p.hand.push(deck.pop());
-    });
-  }
-
-  let top=deck.pop();
-  while(top.color==="wild"||DRAW_VALUES[top.value]!==undefined){
-    deck.unshift(top);
-    shuffle(deck);
-    top=deck.pop();
-  }
-  discard.push(top);
-  activeColor=top.color;
-
-  $("setup").style.display="none";
-  $("game").style.display="block";
-  $("endOverlay").style.display="none";
-  render();
-  checkBotTurn();
+  isBotGame=count===1;
+  const total=isBotGame?2:count;
+  players=Array.from({length:total},(_,i)=>({
+    name:isBotGame?(i===0?(($("playerName0")?.value||"You").trim()||"You"):"Mayhem Bot"):
+      ((($("playerName"+i)?.value||"").trim())||("Player "+(i+1))),
+    hand:[],bot:isBotGame&&i===1,eliminated:false,saidUno:false
+  }));
+  deck=makeDeck(); discard=[];
+  players.forEach(p=>{for(let i=0;i<7;i++)p.hand.push(drawOne());});
+  let first=drawOne();
+  while(first && (first.color==="wild" || isAction(first))) {deck.unshift(first);first=drawOne();}
+  if(!first){first={color:"red",value:"1"};}
+  discard.push(first);activeColor=first.color;
+  current=0;direction=1;pendingUno=null;mustDraw=0;gameOver=false;
+  waitingWild=false;selected=null;handVisible=true;
+  $("setup").style.display="none";$("game").style.display="block";
+  $("colorOverlay").style.display="none";$("endOverlay").style.display="none";
+  applyPanels();
+  say("The mayhem begins!");prepareTurn();
 }
-
 function backToSetup(){
+  clearTimeout(botTimer);clearTimeout(unoTimer);unoHold=false;gameOver=true;
   leaveOnline();
-  clearInterval(botTimer);
-  $("game").style.display="none";
-  $("setup").style.display="block";
-  $("endOverlay").style.display="none";
+  $("endOverlay").style.display="none";$("colorOverlay").style.display="none";
+  $("game").style.display="none";$("setup").style.display="block";
+}
+function getTopCard(){return discard[discard.length-1];}
+function say(message){$("message").textContent=message;}
+function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function cornerText(c){
+  const m={"Skip":"⊘","Reverse":"⇄","Discard All":"▤","Skip Everyone":"♟♟","Rainbow Roulette":"◉","Reverse +4":"⇄+4","Wild":"✦"};
+  return m[c.value]||c.value;
+}
+function cardHTML(c){
+  const label=c.value==="Rainbow Roulette"?"RAINBOW ROULETTE":c.value.toUpperCase();
+  const icons={"Skip":"⊘","Reverse":"⇄","+2":"+2","+4":"▤","+6":"+6","+10":"+10","Reverse +4":"⇄","Discard All":"▤","Skip Everyone":"♟♟","7":"↗","0":"0","Wild":"✦","Rainbow Roulette":"◉"};
+  const icon=icons[c.value]||label;
+  const kind=c.color==="wild"?"wild-face":(penaltyValue(c)>0?"draw-face":(isAction(c)?"action-face":"number-face"));
+  const sub=c.value==="Discard All"?"DISCARD ALL":c.value==="Skip Everyone"?"SKIP EVERYONE":c.value==="Rainbow Roulette"?"RAINBOW ROULETTE":c.value==="Reverse +4"?"WILD REVERSE +4":c.value==="Wild"?"WILD":c.value==="+4"?"WILD DRAW +4":c.value==="+6"?"WILD DRAW 6":c.value==="+10"?"WILD DRAW 10":c.value==="7"?"7 SWAP":c.value==="0"?"0 PASS":label;
+  const corner=escapeHTML(cornerText(c));
+  return `<div class="card ${c.color} ${kind}" data-small="${escapeHTML(label)}"><span class="card-corner top">${corner}</span><span class="card-orbit"></span><span class="card-symbol">${escapeHTML(icon)}</span><span class="card-caption">${escapeHTML(sub)}</span><span class="card-corner bottom">${corner}</span></div>`;
+}
+function isAction(c){
+  return ["Skip","Reverse","+2","Discard All","Skip Everyone"].includes(c.value) ||
+    Object.prototype.hasOwnProperty.call(DRAW_VALUES,c.value) || c.value==="Rainbow Roulette";
+}
+function activePlayers(){return players.map((p,i)=>!p.eliminated?i:-1).filter(i=>i>=0);}
+function nextActive(from,dir=direction){
+  const active=activePlayers(); if(active.length<2)return from;
+  let n=from;
+  for(let k=0;k<players.length;k++){
+    n=(n+dir+players.length)%players.length;
+    if(!players[n].eliminated)return n;
+  }
+  return from;
+}
+function penaltyValue(c){return DRAW_VALUES[c?.value]||0;}
+function canPlay(c){
+  if(!c)return false;
+  if(mustDraw>0)return penaltyValue(c)>=mustDraw;
+  return c.color==="wild" || c.color===activeColor || c.value===getTopCard().value;
 }
 
+/* Side panels: each one can be hidden or shown on its own */
 function togglePanel(which){
-  if(which==='guide'){
-    panelState.guide=!panelState.guide;
-    $("guidePanel").style.display=panelState.guide?"block":"none";
-    $("toggleGuide").textContent=panelState.guide?"Hide Card Guide":"Show Card Guide";
-  } else if(which==='rules'){
-    panelState.rules=!panelState.rules;
-    $("rulesPanel").style.display=panelState.rules?"block":"none";
-    $("toggleRules").textContent=panelState.rules?"Hide Quick Rules":"Show Quick Rules";
+  panelState[which]=!panelState[which];
+  applyPanels();
+}
+function applyPanels(){
+  const layout=$("gameLayout");
+  layout.classList.toggle("hide-guide",!panelState.guide);
+  layout.classList.toggle("hide-rules",!panelState.rules);
+  $("toggleGuide").textContent=(panelState.guide?"Hide":"Show")+" Card Guide";
+  $("toggleRules").textContent=(panelState.rules?"Hide":"Show")+" Quick Rules";
+  renderHand();
+}
+
+/* Who is looking at the screen: bot game = player 1, online = my seat, local = the current player */
+function viewIndex(){
+  if(isBotGame)return 0;
+  if(onlineEnabled&&onlineSeat>=0&&onlineSeat<players.length)return onlineSeat;
+  return current;
+}
+function handleCardClick(i){
+  if(gameOver||unoHold||!players.length)return;
+  const vi=viewIndex();
+  if(vi!==current||players[current].bot)return;
+  const c=players[vi].hand[i];
+  if(!c)return;
+  if(!canPlay(c)){say("That card can't be played right now.");return;}
+  const touch=window.matchMedia&&window.matchMedia("(pointer:coarse)").matches;
+  if(touch&&picked!==i){picked=i;renderHand();return;}
+  picked=-1;playCard(i);
+}
+function renderHand(){
+  const h=$("hand");
+  if(!h||!players.length)return;
+  const vi=viewIndex(), me=players[vi];
+  if(!me)return;
+  const cards=me.hand||[];
+  const myTurn=vi===current&&!players[current].bot&&!gameOver&&!unoHold;
+  const W=h.clientWidth-40;
+  if(W<60)return;
+  const vw=window.innerWidth;
+  let cw=vw<=420?60:vw<=650?66:vw<=1050?78:88;
+  cw=Math.max(44,Math.min(cw,W/2.6));
+  h.style.setProperty("--cw",cw+"px");
+  h.innerHTML="";
+  const n=cards.length;
+  if(!n)return;
+  if(picked>=n)picked=-1;
+  const minStep=Math.max(20,cw*.34);
+  const cap=Math.max(1,Math.floor((W-cw)/minStep)+1);
+  const rows=Math.ceil(n/cap), per=Math.ceil(n/rows);
+  const step=per>1?Math.min(cw*.7,(W-cw)/(per-1)):0;
+  for(let r=0;r<rows;r++){
+    const start=r*per, end=Math.min(n,start+per), m=end-start;
+    const row=document.createElement("div");row.className="hand-row";
+    const spread=Math.min(9,m*1.6);
+    for(let j=0;j<m;j++){
+      const i=start+j, c=cards[i];
+      const wrap=document.createElement("div");wrap.innerHTML=cardHTML(c);
+      const el=wrap.firstElementChild;
+      const rel=m>1?(j/(m-1))*2-1:0;
+      const lift=(i===picked&&myTurn)?18:0;
+      el.style.transform="translateY("+(rel*rel*10-lift).toFixed(1)+"px) rotate("+(rel*spread).toFixed(1)+"deg)";
+      el.style.marginLeft=j===0?"0":(-(cw-step)).toFixed(1)+"px";
+      el.style.zIndex=String(i+1);
+      if(myTurn){
+        if(canPlay(c))el.classList.add("playable");else el.classList.add("dim");
+        if(i===picked)el.classList.add("picked");
+      }
+      el.onclick=()=>handleCardClick(i);
+      row.appendChild(el);
+    }
+    h.appendChild(row);
   }
 }
-
-function isPlayable(card){
-  const top=discard[discard.length-1];
-  if(mustDraw>0){
-    return DRAW_VALUES[card.value]!==undefined;
-  }
-  if(card.color==="wild") return true;
-  if(card.color===activeColor) return true;
-  if(card.value===top.value) return true;
-  return false;
-}
-
-function renderCard(card, index=-1, isHand=false){
-  const el=document.createElement("div");
-  let colClass=card.color;
-  el.className=`card ${colClass}`;
-  if(index>=0 && isHand && picked===index) el.classList.add("picked");
-  if(index>=0 && isHand && isPlayable(card)) el.classList.add("playable");
-
-  let symbol="🃏";
-  let caption=card.value;
-  if(card.value==="Skip") symbol="⛔";
-  else if(card.value==="Reverse") symbol="⇄";
-  else if(card.value==="+2") symbol="+2";
-  else if(card.value==="+4") symbol="+4";
-  else if(card.value==="+6") symbol="+6";
-  else if(card.value==="+10") symbol="+10";
-  else if(card.value==="Reverse +4") symbol="⇄ +4";
-  else if(card.value==="Discard All") symbol="🗑";
-  else if(card.value==="Skip Everyone") symbol="♟";
-  else if(card.value==="Wild") symbol="✦";
-  else if(card.value==="Rainbow Roulette") symbol="🌈";
-  else symbol=card.value;
-
-  el.innerHTML=`
-    <div class="card-corner top">${card.value}</div>
-    <div class="card-symbol">${symbol}</div>
-    <div class="card-caption">${caption}</div>
-    <div class="card-corner bottom">${card.value}</div>
-  `;
-  return el;
-}
-
 function render(){
-  const activeP=players[current];
-  $("turnLabel").textContent=activeP?(activeP.name+"'s Turn"):"Game Over";
+  if(!players.length)return;
+  const p=players[current], vi=viewIndex(), me=players[vi]||p, humanHand=me.hand||[];
+  const myTurn=(vi===current)&&!p.bot;
+  const canAct=!gameOver&&!unoHold&&myTurn&&handVisible;
+  $("turnLabel").textContent=p.name+"'S TURN";
   $("directionLabel").textContent="Direction: "+(direction===1?"→":"←");
-  $("deckCount").textContent=deck.length+" left";
-  $("colorLabel").textContent="Color: "+activeColor.toUpperCase();
-
-  const oppBox=$("opponents");
-  oppBox.innerHTML="";
-  players.forEach((p,i)=>{
-    if(onlineEnabled && i===onlineSeat) return;
-    if(!onlineEnabled && i===0) return;
-
-    const div=document.createElement("div");
-    div.className="player"+(i===current?" active":"")+(p.eliminated?" eliminated":"");
-    div.innerHTML=`
-      <div class="avatar">${p.isBot?"🤖":"👤"}</div>
-      <div class="player-name">${p.name}</div>
-      <div class="player-count">${p.hand.length} cards</div>
-      <div class="mini-backs">${'<i style="background:var(--' + p.hand.length + ')"></i>'.repeat(Math.min(p.hand.length, 5))}</div>
-    `;
-    oppBox.appendChild(div);
-  });
-
-  const topBox=$("topCard");
-  topBox.innerHTML="";
-  if(discard.length>0){
-    topBox.appendChild(renderCard(discard[discard.length-1]));
-  }
-
-  const myIndex=onlineEnabled?onlineSeat:0;
-  const me=players[myIndex]||players[0];
-  $("handTitle").textContent=onlineEnabled?(me.name+"'s Hand"):"YOUR HAND";
-  $("handCount").textContent=(me?me.hand.length:0)+" cards";
-  
-  const handBox=$("hand");
-  handBox.innerHTML="";
-  if(me && me.hand){
-    me.hand.forEach((card,idx)=>{
-      const cEl=renderCard(card,idx,true);
-      cEl.onclick=()=>onCardClick(idx);
-      handBox.appendChild(cEl);
-    });
-  }
-
-  const catchBtn=$("catchButton");
-  catchBtn.disabled=!pendingUno;
-
+  $("deckCount").textContent=deck.length+" cards left";
+  $("topCard").innerHTML=cardHTML(getTopCard());
+  $("colorLabel").textContent="Current color: "+activeColor.toUpperCase()+(mustDraw?" · PENALTY: "+mustDraw:"");
+  $("opponents").innerHTML=players.map((x,i)=>i===vi?"":`
+    <div class="player ${x.eliminated?"eliminated":""} ${(i===current&&!x.eliminated)?"active":""}">
+      <div class="avatar">${x.bot?"🤖":"😎"}</div>
+      <div class="player-name">${escapeHTML(x.name)}</div>
+      <div class="mini-backs">${x.eliminated?"":"<i></i>".repeat(Math.min(x.hand.length,7))}</div>
+      <div class="player-count">${x.eliminated?"ELIMINATED":x.hand.length+" cards"}</div>
+    </div>`).join("");
+  $("handTitle").textContent=(isBotGame||onlineEnabled)?"YOUR HAND":p.name.toUpperCase()+"'S HAND";
+  $("handCount").textContent=humanHand.length+" cards";
+  renderHand();
+  $("drawButton").disabled=!canAct;
+  $("unoButton").disabled=gameOver||!myTurn||!handVisible||humanHand.length!==1;
+  $("catchButton").disabled=!pendingUno||!canAct||pendingUno.player===current;
   publishOnlineState();
 }
-
-function onCardClick(idx){
-  if(gameOver)return;
-  const myIndex=onlineEnabled?onlineSeat:0;
-  if(current!==myIndex && !onlineEnabled) return;
-  if(onlineEnabled && current!==onlineSeat) return;
-
-  const me=players[current];
-  const card=me.hand[idx];
-  if(!isPlayable(card)){
-    $("message").textContent="Cannot play that card!";
-    return;
-  }
-
-  if(picked===idx){
-    playCard(idx);
-    picked=-1;
-  } else {
-    picked=idx;
-    render();
+function recycleDeck(){
+  if(deck.length||discard.length<=1)return;
+  const top=discard.pop();deck=shuffle(discard);discard=[top];
+}
+function drawOne(){recycleDeck();return deck.length?deck.pop():null;}
+function drawMany(player,n){
+  let drawn=0;
+  for(let i=0;i<n;i++){const c=drawOne();if(!c)break;player.hand.push(c);drawn++;}
+  checkElimination(players.indexOf(player));
+  return drawn;
+}
+function checkElimination(index){
+  const p=players[index];
+  if(p && !p.eliminated && p.hand.length>=25){
+    p.eliminated=true;say(p.name+" reached 25 cards and was eliminated!");
+    if(pendingUno?.player===index)pendingUno=null;
   }
 }
-
-function playCard(idx){
-  const p=players[current];
-  const card=p.hand.splice(idx,1)[0];
-  discard.push(card);
-
-  if(p.hand.length>=25){
-    p.eliminated=true;
-    endGame(p.name+" reached 25 cards and was eliminated by the Mercy Rule!");
-    return;
-  }
-
-  if(p.hand.length===0){
-    endGame(p.name+" emptied their hand and wins the game!");
-    return;
-  }
-
-  let advance=true;
-  if(card.color==="wild"){
-    if(card.value==="Wild"||card.value==="+4"||card.value==="+6"||card.value==="+10"||card.value==="Reverse +4"||card.value==="Rainbow Roulette"){
-      if(card.value==="+4") mustDraw+=4;
-      if(card.value==="+6") mustDraw+=6;
-      if(card.value==="+10") mustDraw+=10;
-      if(card.value==="Reverse +4"){ direction*=-1; mustDraw+=4; }
-
-      if(p.isBot||(onlineEnabled && p.uid!==onlineUid)){
-        activeColor=COLORS[Math.floor(Math.random()*COLORS.length)];
-        finishTurnAfterPlay(advance);
-      } else {
-        waitingWild=true;
-        $("colorOverlay").style.display="flex";
-        return;
-      }
-    }
-  } else {
-    activeColor=card.color;
-    if(card.value==="Skip"){
-      advanceTurn();
-    } else if(card.value==="Reverse"){
-      direction*=-1;
-      if(players.length===2) advanceTurn();
-    } else if(card.value==="+2"){
-      mustDraw+=2;
-    } else if(card.value==="7"){
-      swapHands(current);
-    } else if(card.value==="0"){
-      passHands();
-    } else if(card.value==="Skip Everyone"){
-      advance=false;
-    } else if(card.value==="Discard All"){
-      p.hand=p.hand.filter(c=>c.color!==card.color);
-    }
-  }
-
-  finishTurnAfterPlay(advance);
-}
-
-function selectColor(col){
-  activeColor=col;
-  $("colorOverlay").style.display="none";
-  waitingWild=false;
-  finishTurnAfterPlay(true);
-}
-
-function finishTurnAfterPlay(advance){
-  if(advance) advanceTurn();
-  render();
-  checkBotTurn();
-}
-
-function advanceTurn(){
-  let steps=0;
-  do{
-    current=(current+direction+players.length)%players.length;
-    steps++;
-    if(steps>players.length) break;
-  } while(players[current].eliminated);
-}
-
 function drawCard(){
-  if(gameOver)return;
-  const myIndex=onlineEnabled?onlineSeat:0;
-  if(current!==myIndex && !onlineEnabled) return;
-  if(onlineEnabled && current!==onlineSeat) return;
-
+  if(onlineEnabled && onlineSeat!==current)return say("It is not your turn.");
+  if(gameOver||unoHold||players[current].bot||!handVisible)return;
   const p=players[current];
-  if(mustDraw>0){
-    for(let i=0;i<mustDraw;i++){
-      if(deck.length===0) refillDeck();
-      if(deck.length>0) p.hand.push(deck.pop());
-    }
-    mustDraw=0;
-    $("message").textContent=p.name+" drew "+mustDraw+" penalty cards.";
-    advanceTurn();
+  picked=-1;
+  if(mustDraw){
+    const amount=mustDraw;drawMany(p,amount);
+    say(p.name+" drew the accumulated penalty of "+amount+" cards.");
+    mustDraw=0;pendingUno=null;advanceTurn();return;
+  }
+  let drawn=null, count=0;
+  // Draw until a playable card appears, then play it immediately.
+  while(deck.length || discard.length>1){
+    drawn=drawOne();if(!drawn)break;
+    p.hand.push(drawn);count++;
+    if(canPlay(drawn))break;
+  }
+  checkElimination(current);
+  if(p.eliminated){advanceTurn();return;}
+  const idx=p.hand.indexOf(drawn);
+  if(drawn && canPlay(drawn)){
+    say(p.name+" drew "+count+" card(s) and must play the playable card.");
+    playCard(idx);
   } else {
-    if(deck.length===0) refillDeck();
-    if(deck.length>0){
-      p.hand.push(deck.pop());
-      $("message").textContent=p.name+" drew a card.";
-    }
+    say(p.name+" drew "+count+" card(s) and has no playable card.");
     advanceTurn();
   }
-  render();
-  checkBotTurn();
 }
-
-function refillDeck(){
-  if(discard.length<=1) return;
-  const top=discard.pop();
-  deck=shuffle(discard);
-  discard=[top];
-}
-
-function swapHands(idx){
-  const target=(idx+1)%players.length;
-  const temp=players[idx].hand;
-  players[idx].hand=players[target].hand;
-  players[target].hand=temp;
-  $("message").textContent="Hands swapped!";
-}
-
-function passHands(){
-  const firstHand=players[0].hand;
-  for(let i=0;i<players.length-1;i++){
-    players[i].hand=players[i+1].hand;
+function playCard(index){
+  if(onlineEnabled && onlineSeat!==current)return say("It is not your turn.");
+  if(gameOver||unoHold||players[current].bot||!handVisible)return;
+  const c=players[current].hand[index];
+  if(!c||!canPlay(c))return;
+  picked=-1;
+  if(c.color==="wild"){
+    selected=index;waitingWild=true;
+    $("colorOverlay").style.display="flex";return;
   }
-  players[players.length-1].hand=firstHand;
-  $("message").textContent="All hands passed!";
+  finishPlay(index,null);
 }
-
-function callUno(){
-  const myIndex=onlineEnabled?onlineSeat:0;
-  pendingUno=myIndex;
-  $("message").textContent=players[myIndex].name+" called UNO!";
-  setTimeout(()=>{ if(pendingUno===myIndex) pendingUno=null; }, 4000);
+function selectColor(color){
+  if(!waitingWild)return;
+  $("colorOverlay").style.display="none";waitingWild=false;
+  finishPlay(selected,color);selected=null;
 }
-
-function catchUno(){
-  if(pendingUno!==null && pendingUno!==current){
-    const target=players[pendingUno];
-    $("message").textContent="Caught "+target.name+" without calling UNO! Drawing 2 cards.";
-    for(let i=0;i<2;i++){
-      if(deck.length===0) refillDeck();
-      if(deck.length>0) target.hand.hand.push(deck.pop()); // safely push
+function rotateHands(){
+  const active=activePlayers();if(active.length<2)return;
+  const old=players.map(p=>p.hand.slice()), next=players.map(p=>p.hand);
+  active.forEach(i=>{
+    const recipient=active[(active.indexOf(i)+direction+active.length)%active.length];
+    next[recipient]=old[i];
+  });
+  players.forEach((p,i)=>{if(!p.eliminated)p.hand=next[i];});
+  say("ZERO! All active players passed their hands.");
+}
+function swapHand(playerIndex){
+  const targets=activePlayers().filter(i=>i!==playerIndex);
+  if(!targets.length)return;
+  let idx;
+  if(targets.length===1){idx=targets[0];}
+  else{
+    const target=prompt("Enter the player number to swap hands with:\n"+
+      targets.map(i=>(i+1)+". "+players[i].name).join("\n"));
+    if(target===null)return;
+    idx=Number(target)-1;
+    if(!Number.isInteger(idx)||idx<0||idx>=players.length||idx===playerIndex||players[idx].eliminated){
+      alert("That player number is not valid.");return;
     }
-    pendingUno=null;
+  }
+  [players[playerIndex].hand,players[idx].hand]=[players[idx].hand,players[playerIndex].hand];
+  say(players[playerIndex].name+" swapped hands with "+players[idx].name+".");
+  checkElimination(playerIndex);checkElimination(idx);
+}
+function discardAllColor(player,c){
+  const matches=player.hand.filter(x=>x.color===c.color);
+  player.hand=player.hand.filter(x=>x.color!==c.color);
+  // Keep the discarded cards in the game (under the card just played) so the deck is never short of cards.
+  discard.splice(discard.length-1,0,...matches);
+  say(player.name+" discarded "+matches.length+" additional "+c.color+" card(s)!");
+}
+function rainbowRoulette(){
+  const chosen=activeColor;
+  const victims=activePlayers().filter(i=>i!==current);
+  victims.forEach(i=>{
+    let count=0,found=false;
+    while(!found){
+      const c=drawOne();if(!c)break;
+      players[i].hand.push(c);count++;
+      if(c.color===chosen)found=true;
+    }
+    say(players[i].name+" revealed "+count+" card(s) in Rainbow Roulette.");
+    checkElimination(i);
+  });
+}
+function releaseUnoHold(){
+  if(!unoHold)return;
+  clearTimeout(unoTimer);unoHold=false;
+  advanceTurn(unoSkip);
+}
+function finishPlay(index,chosenColor){
+  const player=players[current], card=player.hand.splice(index,1)[0];
+  discard.push(card);activeColor=chosenColor||card.color;pendingUno=null;
+  let skip=0, extraTurn=false;
+  say(player.name+" played "+card.value+"!");
+  if(card.value==="0")rotateHands();
+  if(card.value==="7")swapHand(current);
+  if(card.value==="Discard All")discardAllColor(player,card);
+  if(card.value==="Skip Everyone")extraTurn=true;
+  if(card.value==="Reverse")direction*=-1;
+  if(card.value==="Skip")skip=1;
+  if(card.value==="Reverse" && activePlayers().length===2)skip=1;
+  if(penaltyValue(card)){
+    if(card.value==="Reverse +4"){
+      direction*=-1;
+      if(activePlayers().length===2)skip=1;
+    }
+    mustDraw+=penaltyValue(card);
+  }
+  if(card.value==="Rainbow Roulette")rainbowRoulette();
+  checkElimination(current);
+  if(player.hand.length===0){endGame(player.name+" wins by playing their last card!");return;}
+  if(player.hand.length===1){pendingUno={player:current,called:false};}
+  if(player.eliminated){advanceTurn();return;}
+  if(extraTurn){prepareTurn();return;}
+  if(player.hand.length===1 && activePlayers().length>1){
+    // Short window so this player can press CALL UNO! before the turn passes.
+    unoHold=true;unoSkip=skip;
+    say(player.name+" has ONE card left — press CALL UNO! now!");
     render();
+    unoTimer=setTimeout(releaseUnoHold,2600);
+    return;
+  }
+  advanceTurn(skip);
+}
+function advanceTurn(skip=0){
+  if(gameOver)return;
+  if(activePlayers().length<=1){
+    const winner=players.find(p=>!p.eliminated);
+    endGame(winner?winner.name+" wins by elimination!":"Nobody survived the mayhem!");return;
+  }
+  let from=current;
+  for(let i=0;i<=skip;i++)from=nextActive(from);
+  current=from;prepareTurn();
+}
+function prepareTurn(){
+  if(gameOver)return;
+  if(activePlayers().length<=1){
+    const winner=players.find(p=>!p.eliminated);
+    endGame(winner?winner.name+" wins!":"Nobody survived!");return;
+  }
+  const p=players[current];selected=null;waitingWild=false;handVisible=true;picked=-1;
+  render();
+  if(p.bot)botTimer=setTimeout(botTurn,1500);
+}
+function callUno(){
+  if(onlineEnabled && onlineSeat!==current)return;
+  if(gameOver||!handVisible||players[current].bot||players[current].hand.length!==1)return;
+  if(pendingUno?.player===current){pendingUno.called=true;say(players[current].name+" called UNO!");}
+  if(unoHold){releaseUnoHold();return;}
+  render();
+}
+function catchUno(){
+  if(onlineEnabled && onlineSeat!==current)return;
+  if(!pendingUno||pendingUno.player===current||!handVisible)return;
+  const p=players[pendingUno.player];
+  if(pendingUno.called){say("UNO was called in time!");return;}
+  drawMany(p,2);say(players[current].name+" caught "+p.name+"! They draw 2 cards.");
+  pendingUno=null;render();
+}
+function botTurn(){
+  if(gameOver||!players[current].bot)return;
+  const p=players[current];
+  // The bot sometimes catches a human who forgot to call UNO.
+  if(pendingUno&&pendingUno.player!==current&&!pendingUno.called&&Math.random()<0.5){
+    const victim=players[pendingUno.player];
+    drawMany(victim,2);say("Mayhem Bot caught "+victim.name+" without calling UNO! They draw 2 cards.");
+    pendingUno=null;
+    if(activePlayers().length<=1){advanceTurn();return;}
+  }
+  if(mustDraw){
+    const choices=p.hand.map((c,i)=>({c,i})).filter(x=>penaltyValue(x.c)>=mustDraw);
+    if(choices.length){
+      choices.sort((a,b)=>penaltyValue(a.c)-penaltyValue(b.c));
+      finishBotPlay(choices[0].i,COLORS[Math.floor(Math.random()*4)]);return;
+    }
+    const amount=mustDraw;drawMany(p,amount);mustDraw=0;
+    say("Mayhem Bot draws "+amount+" penalty cards.");advanceTurn();return;
+  }
+  let drawn=null,count=0;
+  while(deck.length||discard.length>1){
+    drawn=drawOne();if(!drawn)break;p.hand.push(drawn);count++;
+    if(canPlay(drawn))break;
+  }
+  checkElimination(current);
+  if(p.eliminated){advanceTurn();return;}
+  if(drawn&&canPlay(drawn)){
+    const i=p.hand.indexOf(drawn);
+    say("Mayhem Bot drew "+count+" and plays the playable card.");
+    finishBotPlay(i,COLORS[Math.floor(Math.random()*4)]);
+  }else{
+    say("Mayhem Bot drew "+count+" card(s).");advanceTurn();
   }
 }
-
-function endGame(msg){
-  gameOver=true;
-  endMessage=msg;
+function finishBotPlay(index,wildColor){
+  const p=players[current],c=p.hand.splice(index,1)[0];
+  discard.push(c);activeColor=c.color==="wild"?wildColor:c.color;pendingUno=null;
+  let skip=0,extra=false;
+  say("Mayhem Bot played "+c.value+"!");
+  if(c.value==="0")rotateHands();
+  if(c.value==="7"){
+    const targets=activePlayers().filter(i=>i!==current);
+    if(targets.length){const target=targets.sort((a,b)=>players[b].hand.length-players[a].hand.length)[0];[p.hand,players[target].hand]=[players[target].hand,p.hand];}
+  }
+  if(c.value==="Discard All")discardAllColor(p,c);
+  if(c.value==="Skip Everyone")extra=true;
+  if(c.value==="Reverse")direction*=-1;
+  if(c.value==="Skip")skip=1;
+  if(c.value==="Reverse"&&activePlayers().length===2)skip=1;
+  if(penaltyValue(c)){
+    if(c.value==="Reverse +4"){direction*=-1;if(activePlayers().length===2)skip=1;}
+    mustDraw+=penaltyValue(c);
+  }
+  if(c.value==="Rainbow Roulette")rainbowRoulette();
+  checkElimination(current);
+  if(p.hand.length===0){endGame("Mayhem Bot wins!");return;}
+  if(p.hand.length===1)pendingUno={player:current,called:Math.random()<0.7};
+  if(p.eliminated){advanceTurn();return;}
+  if(extra){prepareTurn();return;}
+  advanceTurn(skip);
+}
+function endGame(message){
+  gameOver=true;clearTimeout(botTimer);clearTimeout(unoTimer);unoHold=false;endMessage=message;
   $("endTitle").textContent="MAYHEM OVER!";
-  $("endText").textContent=msg;
+  $("endText").textContent=message;
   $("endOverlay").style.display="flex";
   render();
 }
-
-function checkBotTurn(){
-  if(gameOver||!isBotGame) return;
-  const p=players[current];
-  if(p.isBot){
-    botTimer=setTimeout(()=>{
-      if(gameOver) return;
-      botPlay();
-    }, 1200);
+$("introVideo")?.addEventListener("error",()=>{
+  $("introVideo").style.display="none";$("introFallback").style.display="flex";
+});
+$("introVideo")?.addEventListener("ended",()=>{$("enterGame").style.display="block";});
+$("enterGame").style.display="block";
+renderNameFields();
+// Re-fit the card fan whenever the hand area changes size (rotation, resize, panels hidden/shown).
+(function(){
+  let lastW=0;
+  const refit=()=>{const w=$("hand").clientWidth;if(w!==lastW){lastW=w;renderHand();}};
+  if(window.ResizeObserver)new ResizeObserver(refit).observe($("hand"));
+  else window.addEventListener("resize",()=>renderHand());
+})();
+// Turn Direction Trail: light chevrons circle the piles. It only READS the existing `direction` variable
+// (1 = clockwise, -1 = anticlockwise) every frame; it never changes turn logic. When direction flips
+// (Reverse, Reverse +4, new game, online update) the motion eases around smoothly.
+(function(){
+  const ring=$("pileRing"); if(!ring)return;
+  const NS="http://www.w3.org/2000/svg", G=6, PATTERN=[1,.62,.38,.22,.12,.06];
+  const slow=window.matchMedia&&window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+  let svg,track,glow,gMarks,segs=[],P=0,N=0,marks=[],sc=1,speed=0,vel=0,phase=0,last=0,W=0,H=0;
+  function el(n,a){const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);return e;}
+  function build(){
+    W=ring.clientWidth;H=ring.clientHeight;
+    if(W<40||H<40)return;
+    if(!svg){
+      svg=el("svg",{"class":"turn-trail","aria-hidden":"true"});
+      glow=el("path",{"class":"tt-glow"});track=el("path",{"class":"tt-track"});gMarks=el("g",{});
+      svg.append(glow,track,gMarks);ring.insertBefore(svg,ring.firstChild);
+    }
+    svg.setAttribute("viewBox","0 0 "+W+" "+H);
+    const m=5,x0=m,y0=m,x1=W-m,y1=H-m,r=Math.max(2,Math.min((x1-x0)/2,(y1-y0)/2));
+    const a=x1-x0-2*r,b=y1-y0-2*r,q=Math.PI*r/2;
+    const d="M"+(x0+r)+","+y0+" H"+(x1-r)+" A"+r+","+r+" 0 0 1 "+x1+","+(y0+r)+" V"+(y1-r)+" A"+r+","+r+" 0 0 1 "+(x1-r)+","+y1+" H"+(x0+r)+" A"+r+","+r+" 0 0 1 "+x0+","+(y1-r)+" V"+(y0+r)+" A"+r+","+r+" 0 0 1 "+(x0+r)+","+y0+"Z";
+    glow.setAttribute("d",d);track.setAttribute("d",d);
+    // clockwise (screen) segments: top, TR arc, right, BR arc, bottom, BL arc, left, TL arc
+    segs=[
+      {len:a,f:s=>[x0+r+s,y0,0]},
+      {len:q,f:s=>{const t=-Math.PI/2+s/r;return[x1-r+r*Math.cos(t),y0+r+r*Math.sin(t),t*180/Math.PI+90];}},
+      {len:b,f:s=>[x1,y0+r+s,90]},
+      {len:q,f:s=>{const t=s/r;return[x1-r+r*Math.cos(t),y1-r+r*Math.sin(t),t*180/Math.PI+90];}},
+      {len:a,f:s=>[x1-r-s,y1,180]},
+      {len:q,f:s=>{const t=Math.PI/2+s/r;return[x0+r+r*Math.cos(t),y1-r+r*Math.sin(t),t*180/Math.PI+90];}},
+      {len:b,f:s=>[x0,y1-r-s,270]},
+      {len:q,f:s=>{const t=Math.PI+s/r;return[x0+r+r*Math.cos(t),y0+r+r*Math.sin(t),t*180/Math.PI+90];}}
+    ];
+    P=2*a+2*b+4*q;
+    const n=Math.max(G*2,Math.round(P/34/G)*G);
+    if(n!==N){gMarks.textContent="";marks=[];N=n;for(let i=0;i<N;i++){const p=el("polygon",{"class":"tt-mark",points:"-5,-6 4,0 -5,6 -2,0"});gMarks.appendChild(p);marks.push(p);}}
+    sc=Math.max(.95,Math.min(1.5,H/175));
+    speed=(P/(slow?24:10));
+    if(!vel)vel=(direction===-1?-1:1)*speed;
   }
-}
-
-function botPlay(){
-  const p=players[current];
-  if(mustDraw>0){
-    for(let i=0;i<mustDraw;i++){
-      if(deck.length===0) refillDeck();
-      if(deck.length>0) p.hand.push(deck.pop());
-    }
-    mustDraw=0;
-    $("message").textContent=p.name+" took the penalty draw.";
-    advanceTurn();
-    render();
-    checkBotTurn();
-    return;
+  function pointAt(s){
+    for(let i=0;i<segs.length;i++){if(s<=segs[i].len||i===segs.length-1)return segs[i].f(Math.min(s,segs[i].len));s-=segs[i].len;}
+    return segs[0].f(0);
   }
-
-  const playableIdx=p.hand.findIndex(c=>isPlayable(c));
-  if(playableIdx>=0){
-    const card=p.hand.splice(playableIdx,1)[0];
-    discard.push(card);
-    $("message").textContent=p.name+" played "+card.value+" ("+card.color+").";
-
-    if(p.hand.length>=25){
-      p.eliminated=true;
-      endGame(p.name+" reached 25 cards and was eliminated!");
-      return;
+  function frame(t){
+    requestAnimationFrame(frame);
+    const dt=Math.min(.05,(t-last)/1000||0);last=t;
+    if(!svg||!P||ring.offsetParent===null)return;
+    const target=(direction===-1?-1:1)*speed;           // reads the existing game variable
+    vel+=(target-vel)*Math.min(1,dt*7);                  // smooth reversal (~0.4s)
+    phase=((phase+vel*dt)%P+P)%P;
+    const f=Math.max(-1,Math.min(1,vel/speed)), w=(f+1)/2, sp=P/N;
+    for(let k=0;k<N;k++){
+      const pt=pointAt((((k*sp+phase)%P)+P)%P), g=k%G;
+      const op=w*PATTERN[G-1-g]+(1-w)*PATTERN[g];
+      const size=sc*(.7+.45*op);
+      marks[k].setAttribute("transform","translate("+pt[0].toFixed(1)+" "+pt[1].toFixed(1)+") rotate("+pt[2].toFixed(1)+") scale("+(size*f).toFixed(2)+" "+size.toFixed(2)+")");
+      marks[k].setAttribute("fill-opacity",(.12+.88*op).toFixed(2));
     }
-    if(p.hand.length===0){
-      endGame(p.name+" wins!");
-      return;
-    }
-
-    if(card.color==="wild"){
-      activeColor=COLORS[Math.floor(Math.random()*COLORS.length)];
-      if(card.value==="+4") mustDraw+=4;
-      if(card.value==="+6") mustDraw+=6;
-      if(card.value==="+10") mustDraw+=10;
-    } else {
-      activeColor=card.color;
-      if(card.value==="Skip") advanceTurn();
-      else if(card.value==="Reverse") direction*=-1;
-      else if(card.value==="+2") mustDraw+=2;
-    }
-    advanceTurn();
-  } else {
-    if(deck.length===0) refillDeck();
-    if(deck.length>0){
-      p.hand.push(deck.pop());
-      $("message").textContent=p.name+" drew a card.";
-    }
-    advanceTurn();
   }
-  render();
-  checkBotTurn();
-}
+  if(window.ResizeObserver)new ResizeObserver(build).observe(ring);else window.addEventListener("resize",build);
+  build();requestAnimationFrame(frame);
+})();
 </script>
 </body>
 </html>
