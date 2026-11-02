@@ -157,14 +157,53 @@ select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background
   <div class="name-fields" id="nameFields"></div>
   <button class="primary" onclick="startGame()">START LOCAL GAME →</button>
   <div class="online-box">
-    <h2>🌐 ONLINE MULTIPLAYER</h2>
-    <p>Create a room and share its code, or join a friend's room.</p>
-    <div class="setup-row"><button class="gold" onclick="createOnlineRoom()">CREATE ROOM</button><input id="joinCode" maxlength="6" placeholder="ROOM CODE" style="text-transform:uppercase"><button class="primary" onclick="joinOnlineRoom()">JOIN ROOM</button></div>
-    <div id="onlineStatus" class="info">Connecting to online services…</div>
-    <div id="roomInfo" class="room-code"></div>
-    <button id="onlineStart" class="primary" style="display:none" onclick="startOnlineGame()">START ONLINE GAME →</button>
+  <h2>🌐 ONLINE MULTIPLAYER</h2>
+  <p>Create a room and share its code, or join a friend's room.</p>
+
+  <button class="gold" onclick="createOnlineRoom()">CREATE ROOM</button>
+
+  <h3>JOIN A ROOM</h3>
+
+  <input id="joinPlayerName" type="text" maxlength="18"
+    placeholder="Enter your player name">
+
+  <div class="avatar-choice">
+    <img id="joinAvatarPreview" src="avatars/rogue.webp"
+      alt="Selected avatar">
+
+    <select id="joinPlayerAvatar" onchange="updateJoinAvatar()">
+      <option value="0">King</option>
+      <option value="1" selected>Rogue</option>
+      <option value="2">Wizard</option>
+      <option value="3">Pirate</option>
+      <option value="4">Queen</option>
+      <option value="5">Skull King</option>
+      <option value="6">Gamer Cat</option>
+      <option value="7">Panda</option>
+      <option value="8">Ninja</option>
+      <option value="9">Robot</option>
+    </select>
   </div>
-  <p class="info">Each player starts with 7 cards. Enter player names before starting. Only your own hand is shown; other players’ card backs are hidden.</p>
+ <input id="joinCode" maxlength="6"
+  placeholder="ROOM CODE" style="text-transform:uppercase">
+
+<button class="primary" onclick="joinOnlineRoom()">JOIN ROOM</button>
+
+<div id="onlineStatus" class="info">
+  Connecting to online services…
+</div>
+
+<div id="roomInfo" class="room-code"></div>
+
+<button id="onlineStart" class="primary"
+  style="display:none" onclick="startOnlineGame()">
+  START ONLINE GAME →
+</button>
+</div>
+<p class="info">
+  Each player starts with 7 cards. Enter player names before starting.
+  Only your own hand is shown; other players’ card backs are hidden.
+</p>
 </section>
   <div id="onlineLobby" class="overlay">
   <div class="dialog">
