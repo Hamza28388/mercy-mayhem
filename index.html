@@ -322,42 +322,67 @@ function makeRoomCode(){return Math.random().toString(36).slice(2,8).toUpperCase
 }
 
 async function joinOnlineRoom() {
-  if (!onlineReady) return alert('Please wait for online connection.');
+  if (!onlineReady) {
+    return alert('Please wait for online connection.');
+  }
 
   const code = ($('joinCode').value || '').trim().toUpperCase();
+  const name = ($('joinPlayerName').value || '').trim();
+  const avatar = Number($('joinPlayerAvatar').value);
 
-  if (!/^[A-Z0-9]{6}$/.test(code))
+  if (!name) {
+    return alert('Please enter your player name.');
+  }
+
+  if (!/^[A-Z0-9]{6}$/.test(code)) {
     return alert('Enter the 6-character room code.');
+  }
+
+  if (!Number.isInteger(avatar) || avatar < 0 || avatar > 9) {
+    return alert('Please select a valid avatar.');
+  }
 
   const ref = firebase.database().ref('rooms/' + code);
 
   try {
     const snap = await ref.get();
 
-    if (!snap.exists()) return alert('Room not found.');
-    if (snap.val().status !== 'lobby')
-      return alert('This game has already started.');
+    if (!snap.exists()) {
+      return alert('Room not found.');
+    }
 
-const name = (prompt('Enter your player name:') || 'Player').trim() || 'Player';
-const avatarInput = prompt('Choose your avatar number (1-10):', '1');
-const avatar = Math.max(0, Math.min(9, Number(avatarInput || 1) - 1));
+    const room = snap.val();
+
+    if (room.status !== 'lobby') {
+      return alert('This game has already started.');
+    }
+
+    const existingPlayers = room.players || {};
+
+    if (!existingPlayers[onlineUid] &&
+        Object.keys(existingPlayers).length >= 8) {
+      return alert('This room is full.');
+    }
 
     const playerRef = ref.child('players/' + onlineUid);
 
     const result = await playerRef.transaction(existing => {
       if (existing) return existing;
-      return { uid: onlineUid, name, avatar };
+
+      return {
+        uid: onlineUid,
+        name: name,
+        avatar: avatar
+      };
     });
 
-    if (!result.committed)
+    if (!result.committed) {
       return alert('Could not join the room.');
+    }
 
     const updated = await ref.get();
-    const room = updated.val();
-    const ids = Object.keys(room.players || {});
-
-    if (ids.length > 8)
-      return alert('This room is full.');
+    const updatedRoom = updated.val();
+    const ids = Object.keys(updatedRoom.players || {});
 
     onlineRoom = code;
     onlineHost = false;
@@ -368,7 +393,8 @@ const avatar = Math.max(0, Math.min(9, Number(avatarInput || 1) - 1));
     listenOnlineRoom();
 
     $('roomInfo').textContent = 'ROOM: ' + code;
-    $('onlineStatus').textContent = 'Joined room. Waiting for host to start.';
+    $('onlineStatus').textContent =
+      'Joined room. Waiting for host to start.';
 
   } catch (e) {
     alert('Could not join room: ' + e.message);
