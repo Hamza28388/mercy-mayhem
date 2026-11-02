@@ -76,7 +76,7 @@ select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background
 .game-main{min-width:0}.guide-panel{padding:10px;position:sticky;top:10px;max-height:calc(100vh - 20px);overflow:auto;border:1px solid #e7d2a5;background:linear-gradient(160deg,#fffaf0,#f3e7d2)}
 .guide-panel h2{font:800 16px "Playfair Display",serif;margin:0 0 3px;color:#392342}.guide-intro{font-size:9px;color:#907b6a;text-transform:uppercase;letter-spacing:1px;margin:0 0 7px}
 .guide-item{padding:6px 0;border-top:1px solid #e8dac4;display:flex;flex-direction:column;gap:2px}.guide-item b{font-size:10.5px;color:#382442}.guide-item span{font-size:9.5px;line-height:1.3;color:#6d6061}.guide-foot{font-size:9.5px;line-height:1.35;color:#735d36;background:#f8edcf;padding:7px;border-radius:7px;margin:8px 0 0}
-@media(max-width:1050px){.game-layout{grid-template-columns:1fr 1fr}.game-main{grid-column:1/-1;grid-row:1}.guide-panel{position:static;max-height:none}.guide-panel:first-child{grid-column:1}.guide-panel:last-child{grid-column:2}}
+@media(max-width:1050px){.game-layout{grid-template-columns:1fr 1fr}.game-main{grid-column:1/-1;grid-row:1}.guide-panel{position:relative;max-height:none}.guide-panel:first-child{grid-column:1;grid-row:2}.guide-panel:last-child{grid-column:2;grid-row:2}}
 @media(max-width:650px){.game-layout{grid-template-columns:1fr;gap:12px}.game-main{grid-column:1;grid-row:1}.guide-panel:first-child,.guide-panel:last-child{grid-column:1}.guide-panel{position:static}.guide-panel h2{font-size:17px}.guide-item{padding:7px 0}}
 
 
@@ -98,6 +98,43 @@ select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background
 .online-box{margin:18px auto 0;padding:16px;background:#f5ead7;border:1px solid #dfc99f;border-radius:14px;max-width:520px}
 .online-box input{max-width:180px}.room-code{font-size:24px;font-weight:1000;letter-spacing:5px;color:#5b321f}
 @media(max-width:600px){.hand{justify-content:flex-start;padding-left:22px}.hand .card{margin-left:-34px;width:76px;height:114px}.hand .card:first-child{margin-left:0}}
+
+/* Mercy Mayhem layout restoration: guides below the table */
+.game-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+.game-main{grid-column:1/-1;grid-row:1;min-width:0}
+.guide-panel{position:relative;top:auto;grid-row:2;max-height:none;overflow:visible;padding:14px;background:linear-gradient(160deg,#30203a,#1e1428);border:1px solid #8c6a43;color:#fff3d5;box-shadow:0 8px 20px #28172b35}
+.guide-panel:first-child{grid-column:1}.guide-panel:last-child{grid-column:2}
+.guide-panel h2{color:#f5c65b;font-size:17px}.guide-intro{color:#c7b5ca}.guide-item{border-top:1px solid #ffffff20}.guide-item b{color:#ffe3a0}.guide-item span{color:#e2d6e5}.guide-foot{background:#ffffff12;color:#f5d994}
+.guide-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.guide-actions{display:flex;gap:5px}.guide-actions button{padding:4px 8px;font-size:11px;background:#49304f;color:#ffe2a0;border:1px solid #9c7945}
+.guide-content.is-collapsed{display:none}
+.guide-restore{display:none;grid-row:3;justify-self:start;background:#30203a;color:#ffe2a0;border:1px solid #9c7945;padding:7px 11px;font-size:12px}
+.guide-restore.visible{display:inline-flex}
+.avatar{width:54px;height:54px;margin:0 auto 5px;border-radius:50%;overflow:hidden;border:2px solid #f5c65b;box-shadow:0 0 0 2px #4c3155,0 3px 9px #0008;background:#271b31}
+.avatar img{display:block;width:100%;height:100%;object-fit:cover}
+.player.active{outline:2px solid #f5c65b;background:#ffffff30}
+.player{min-width:110px}
+.player.you{border-color:#f5c65b}
+.avatar-choice{display:flex;align-items:center;gap:8px;justify-content:center;margin:4px 0 8px}
+.avatar-choice img{width:34px;height:34px;border-radius:50%;border:2px solid #f5c65b;object-fit:cover}
+.avatar-choice select{max-width:145px;padding:7px;margin:0;font-size:12px}
+.last-play{display:flex;align-items:center;justify-content:center;gap:10px;min-height:44px;margin:4px auto 0;padding:7px 12px;width:max-content;max-width:100%;border:1px solid #f5c65b66;border-radius:12px;background:#24172fc9;color:#fff0c2;font-weight:900;font-size:13px}
+.last-play .card{width:38px;height:57px;font-size:10px;border-width:2px;animation:none;transform:none}
+.last-play .card .card-symbol{font-size:19px}.last-play .card .card-corner{font-size:5px}.last-play .card .card-caption{font-size:5px}
+.hand{display:flex;justify-content:center;align-items:flex-end;flex-wrap:nowrap;overflow-x:auto;overflow-y:visible;gap:0;padding:34px 24px 28px;min-height:195px;perspective:900px;scrollbar-width:thin}
+.hand .card{flex:0 0 88px;margin-left:-24px;transform-origin:50% 115%;transition:transform .18s,filter .18s;cursor:pointer}
+.hand .card:first-child{margin-left:0}
+.hand .card:nth-child(1){transform:rotate(-18deg) translateY(13px)}
+.hand .card:nth-child(2){transform:rotate(-13deg) translateY(7px)}
+.hand .card:nth-child(3){transform:rotate(-8deg) translateY(2px)}
+.hand .card:nth-child(4){transform:rotate(-3deg)}
+.hand .card:nth-child(5){transform:rotate(3deg)}
+.hand .card:nth-child(6){transform:rotate(8deg) translateY(2px)}
+.hand .card:nth-child(7){transform:rotate(13deg) translateY(7px)}
+.hand .card:nth-child(n+8){transform:rotate(16deg) translateY(12px)}
+.hand .card:hover{z-index:8;transform:translateY(-22px) rotate(0) scale(1.05);filter:brightness(1.12)}
+@media(max-width:700px){.game-layout{grid-template-columns:1fr}.game-main{grid-column:1;grid-row:1}.guide-panel:first-child,.guide-panel:last-child{grid-column:1;grid-row:auto}.guide-restore{grid-row:auto}.hand{justify-content:flex-start;padding-left:18px}.hand .card{flex-basis:76px;margin-left:-31px;width:76px;height:114px}.hand .card:first-child{margin-left:0}.avatar{width:46px;height:46px}}
+
 </style>
 </head>
 <body>
@@ -131,8 +168,8 @@ select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background
 </section>
 <section id="game">
   <div class="game-layout">
-    <aside class="guide-panel panel">
-      <h2>🃏 CARD GUIDE</h2><p class="guide-intro">What each card does</p>
+    <aside id="cardGuide" class="guide-panel panel">
+      <div class="guide-head"><div><h2>🃏 CARD GUIDE</h2><p class="guide-intro">What each card does</p></div><div class="guide-actions"><button onclick="toggleGuide('cardGuideContent')">Hide</button><button aria-label="Close Card Guide" onclick="closeGuide('cardGuide','restoreCardGuide')">×</button></div></div><div id="cardGuideContent" class="guide-content">
       <div class="guide-item"><b>⛔ Skip</b><span>Next player loses their turn.</span></div>
       <div class="guide-item"><b>⇄ Reverse</b><span>Changes the direction of play. With 2 players, it also skips the opponent.</span></div>
       <div class="guide-item"><b>+2 / +4 / +6 / +10</b><span>Next player draws that many cards unless they can stack a permitted draw card.</span></div>
@@ -144,18 +181,18 @@ select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background
       <div class="guide-item"><b>🌈 Rainbow Roulette</b><span>Choose a color. Each opponent draws until they reveal that color.</span></div>
       <div class="guide-item"><b>✦ Wild</b><span>Choose the color the next player must follow.</span></div>
       <div class="guide-item"><b>UNO!</b><span>Call UNO when you have one card left. If caught before your next turn, draw 2.</span></div>
-    </aside>
+    </div></aside>
     <div class="game-main">
       <div class="topline"><div class="status" id="turnLabel">YOUR TURN</div><div class="status" id="directionLabel">Direction: →</div><button class="light" onclick="backToSetup()">NEW GAME</button></div>
       <div class="table"><div class="opponents" id="opponents"></div><div class="table-center">
         <div class="pile"><div class="pile-label">DRAW PILE</div><div class="card back" onclick="drawCard()">MM</div><div class="center-note" id="deckCount"></div></div>
         <div class="pile"><div class="pile-label">PLAY PILE</div><div id="topCard"></div><div class="center-note" id="colorLabel"></div></div>
-      </div><div class="message" id="message">Good luck!</div></div>
+      </div><div class="message" id="message">Good luck!</div><div id="lastPlay" class="last-play" aria-live="polite">Waiting for the first card…</div></div>
       <div class="controls"><button class="gold" id="drawButton" onclick="drawCard()">DRAW CARD</button><button class="primary" id="unoButton" onclick="callUno()">CALL UNO!</button><button class="danger" id="catchButton" onclick="catchUno()" disabled>CATCH UNO</button></div>
       <div class="panel hand-panel"><div class="hand-heading"><h2 id="handTitle">YOUR HAND</h2><span class="status" id="handCount">0 cards</span></div><div class="hand" id="hand"></div><div class="info">Online test note: room state is shared through Firebase Realtime Database. Select a playable card. If you cannot play, draw a card. Wild cards let you choose the next color. At 25 cards, a player is eliminated.</div></div>
     </div>
-    <aside class="guide-panel panel">
-      <h2>📘 QUICK RULES</h2><p class="guide-intro">Keep these in mind</p>
+    <aside id="quickRules" class="guide-panel panel">
+      <div class="guide-head"><div><h2>📘 QUICK RULES</h2><p class="guide-intro">Keep these in mind</p></div><div class="guide-actions"><button onclick="toggleGuide('quickRulesContent')">Hide</button><button aria-label="Close Quick Rules" onclick="closeGuide('quickRules','restoreQuickRules')">×</button></div></div><div id="quickRulesContent" class="guide-content">
       <div class="guide-item"><b>Stacking</b><span>Play a draw card of equal or higher value than the current accumulated penalty. Otherwise, draw the full penalty.</span></div>
       <div class="guide-item"><b>Draw cards</b><span>+2, +4, +6 and +10 add to the penalty total. +6 and +10 are rarer wild cards.</span></div>
       <div class="guide-item"><b>Turn pace</b><span>Bot turns pause before playing so you can follow the action.</span></div>
@@ -163,7 +200,7 @@ select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background
       <div class="guide-item"><b>Winning</b><span>Be the first to empty your hand, or be the last player remaining after eliminations.</span></div>
       <div class="guide-item"><b>Wild colors</b><span>After playing a Wild card, choose red, blue, green or yellow.</span></div>
       <p class="guide-foot">Tip: Read the card name and the matching rule here before making your move.</p>
-    </aside>
+    </div></aside>
   </div>
 </section>
 </main>
@@ -178,16 +215,22 @@ let players=[], deck=[], discard=[], current=0, direction=1, activeColor="red";
 let pendingUno=null, mustDraw=0, gameOver=false, waitingWild=false, selected=null;
 let isBotGame=false, botTimer=null, handVisible=true;
 const $ = id => document.getElementById(id);
+const AVATARS=[{name:"King",file:"king.webp"},{name:"Rogue",file:"rogue.webp"},{name:"Wizard",file:"wizard.webp"},{name:"Pirate",file:"pirate.webp"},{name:"Queen",file:"queen.webp"},{name:"Skull King",file:"skull-king.webp"},{name:"Gamer Cat",file:"gamer-cat.webp"},{name:"Panda",file:"panda.webp"},{name:"Ninja",file:"ninja.webp"},{name:"Robot",file:"robot.webp"}];
+let lastPlayed=null;
+function avatarHTML(index){const a=AVATARS[(Number(index)||0)%AVATARS.length];return `<img src="avatars/${a.file}" alt="${a.name}">`;}
+function toggleGuide(id){$(id)?.classList.toggle("is-collapsed");}
+function closeGuide(panelId,buttonId){$(panelId).style.display="none";$(buttonId).classList.add("visible");}
+function restoreGuide(panelId,buttonId){$(panelId).style.display="block";$(buttonId).classList.remove("visible");}
 // Firebase online rooms — shared room state is readable by room participants.
 const firebaseConfig={apiKey:"AIzaSyBS_DTVrK2HHMXqGISGPwLP_z7xsL5vQg",authDomain:"hamza-9a738.firebaseapp.com",databaseURL:"https://hamza-9a738-default-rtdb.firebaseio.com",projectId:"hamza-9a738",storageBucket:"hamza-9a738.firebasestorage.app",messagingSenderId:"565843347412",appId:"1:565843347412:web:864b3908fb6e3e38423841"};
 let onlineEnabled=false,onlineReady=false,onlineRoom="",onlineUid="",onlineSeat=-1,onlineHost=false,onlineRef=null,applyingRemote=false,publishTimer=null;
 try{if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);firebase.auth().signInAnonymously().then(u=>{onlineUid=u.user.uid;onlineReady=true;$('onlineStatus').textContent='Online service connected. Create or join a room.';}).catch(e=>$('onlineStatus').textContent='Online sign-in error: '+e.message);}catch(e){$('onlineStatus').textContent='Firebase could not start: '+e.message;}
 function makeRoomCode(){return Math.random().toString(36).slice(2,8).toUpperCase();}
-async function createOnlineRoom(){if(!onlineReady)return alert('Please wait for online connection.');const code=makeRoomCode();onlineRoom=code;onlineHost=true;onlineSeat=0;onlineEnabled=true;onlineRef=firebase.database().ref('rooms/'+code);await onlineRef.set({host:onlineUid,status:'lobby',players:[{uid:onlineUid,name:(($('playerName0')?.value||'You').trim()||'You')}],createdAt:firebase.database.ServerValue.TIMESTAMP});listenOnlineRoom();$('roomInfo').textContent='ROOM: '+code;$('onlineStatus').textContent='Room created. Share this code with friends.';$('onlineStart').style.display='inline-block';}
-async function joinOnlineRoom(){if(!onlineReady)return alert('Please wait for online connection.');const code=($('joinCode').value||'').trim().toUpperCase();if(!/^[A-Z0-9]{6}$/.test(code))return alert('Enter the 6-character room code.');const ref=firebase.database().ref('rooms/'+code);const snap=await ref.get();if(!snap.exists())return alert('Room not found. Check the code.');const data=snap.val();if(data.status!=='lobby')return alert('This game has already started.');if((data.players||[]).length>=8)return alert('This room is full.');onlineRoom=code;onlineHost=false;onlineSeat=data.players.length;onlineEnabled=true;onlineRef=ref;const name=(($('playerName0')?.value||'Player').trim()||'Player');await ref.child('players').transaction(a=>{a=a||[];if(a.some(x=>x.uid===onlineUid))return a;if(a.length>=8)return; a.push({uid:onlineUid,name});return a;});listenOnlineRoom();$('roomInfo').textContent='ROOM: '+code;$('onlineStatus').textContent='Joined room. Waiting for host to start.';}
+async function createOnlineRoom(){if(!onlineReady)return alert('Please wait for online connection.');const code=makeRoomCode();onlineRoom=code;onlineHost=true;onlineSeat=0;onlineEnabled=true;onlineRef=firebase.database().ref('rooms/'+code);await onlineRef.set({host:onlineUid,status:'lobby',players:[{uid:onlineUid,name:(($('playerName0')?.value||'You').trim()||'You'),avatar:Number($('playerAvatar0')?.value||0)}],createdAt:firebase.database.ServerValue.TIMESTAMP});listenOnlineRoom();$('roomInfo').textContent='ROOM: '+code;$('onlineStatus').textContent='Room created. Share this code with friends.';$('onlineStart').style.display='inline-block';}
+async function joinOnlineRoom(){if(!onlineReady)return alert('Please wait for online connection.');const code=($('joinCode').value||'').trim().toUpperCase();if(!/^[A-Z0-9]{6}$/.test(code))return alert('Enter the 6-character room code.');const ref=firebase.database().ref('rooms/'+code);const snap=await ref.get();if(!snap.exists())return alert('Room not found. Check the code.');const data=snap.val();if(data.status!=='lobby')return alert('This game has already started.');if((data.players||[]).length>=8)return alert('This room is full.');onlineRoom=code;onlineHost=false;onlineSeat=data.players.length;onlineEnabled=true;onlineRef=ref;const name=(($('playerName0')?.value||'Player').trim()||'Player');await ref.child('players').transaction(a=>{a=a||[];if(a.some(x=>x.uid===onlineUid))return a;if(a.length>=8)return; a.push({uid:onlineUid,name,avatar:Number($('playerAvatar0')?.value||0)});return a;});listenOnlineRoom();$('roomInfo').textContent='ROOM: '+code;$('onlineStatus').textContent='Joined room. Waiting for host to start.';}
 function listenOnlineRoom(){if(!onlineRef)return;onlineRef.on('value',snap=>{const d=snap.val();if(!d)return;if(d.status==='lobby'){$('onlineStatus').textContent='Players in room: '+(d.players||[]).map(x=>x.name).join(', ');$('onlineStart').style.display=onlineHost?'inline-block':'none';}if(d.status==='playing'&&d.state&&!applyingRemote){applyOnlineState(d.state);}});}
-function startOnlineGame(){if(!onlineHost)return;onlineRef.once('value').then(s=>{const d=s.val();if(!d||d.players.length<2)return alert('At least 2 players must join first.');const names=d.players.map(x=>x.name);$('playerCount').value=String(names.length);renderNameFields();names.forEach((n,i)=>{const el=$('playerName'+i);if(el)el.value=n;});startGame();onlineSeat=d.players.findIndex(x=>x.uid===onlineUid);onlineRef.update({status:'playing'});publishOnlineState();});}
-function onlineState(){return {players,deck,discard,current,direction,activeColor,pendingUno,mustDraw,gameOver,isBotGame:false};}
+function startOnlineGame(){if(!onlineHost)return;onlineRef.once('value').then(s=>{const d=s.val();if(!d||d.players.length<2)return alert('At least 2 players must join first.');const names=d.players.map(x=>x.name);$('playerCount').value=String(names.length);renderNameFields();names.forEach((n,i)=>{const el=$('playerName'+i);if(el)el.value=n;const av=$('playerAvatar'+i);if(av&&d.players[i])av.value=String(d.players[i].avatar??(i%AVATARS.length));});startGame();onlineSeat=d.players.findIndex(x=>x.uid===onlineUid);onlineRef.update({status:'playing'});publishOnlineState();});}
+function onlineState(){return {players,deck,discard,current,direction,activeColor,pendingUno,mustDraw,gameOver,isBotGame:false,lastPlayed};}
 function publishOnlineState(){if(!onlineEnabled||applyingRemote||!onlineRef||!players.length)return;clearTimeout(publishTimer);publishTimer=setTimeout(()=>onlineRef.child('state').set(onlineState()),120);}
 function applyOnlineState(st){applyingRemote=true;players=st.players||[];deck=st.deck||[];discard=st.discard||[];current=st.current||0;direction=st.direction||1;activeColor=st.activeColor||'red';pendingUno=st.pendingUno||null;mustDraw=st.mustDraw||0;gameOver=!!st.gameOver;isBotGame=false;$('setup').style.display='none';$('game').style.display='block';$('colorOverlay').style.display='none';$('endOverlay').style.display='none';render();applyingRemote=false;}
 
@@ -208,6 +251,12 @@ function renderNameFields(){
     input.placeholder=count===1?"Your name":"Player "+(i+1)+" name";
     input.value=count===1?"You":"Player "+(i+1);
     box.appendChild(input);
+    const choice=document.createElement("div");choice.className="avatar-choice";
+    const img=document.createElement("img");img.src="avatars/"+AVATARS[i%AVATARS.length].file;img.alt=AVATARS[i%AVATARS.length].name;
+    const select=document.createElement("select");select.id="playerAvatar"+i;select.setAttribute("aria-label","Avatar for "+input.placeholder);
+    AVATARS.forEach((a,n)=>{const op=document.createElement("option");op.value=String(n);op.textContent=a.name;if(n===i%AVATARS.length)op.selected=true;select.appendChild(op);});
+    select.addEventListener("change",()=>{img.src="avatars/"+AVATARS[Number(select.value)].file;img.alt=AVATARS[Number(select.value)].name;});
+    choice.append(img,select);box.appendChild(choice);
   }
 }
 function shuffle(a){
@@ -245,7 +294,8 @@ function startGame(){
   players=Array.from({length:total},(_,i)=>({
     name:isBotGame?(i===0?(($("playerName0")?.value||"You").trim()||"You"):"Mayhem Bot"):
       ((($("playerName"+i)?.value||"").trim())||("Player "+(i+1))),
-    hand:[],bot:isBotGame&&i===1,eliminated:false,saidUno:false
+    hand:[],bot:isBotGame&&i===1,eliminated:false,saidUno:false,
+    avatar:Number($("playerAvatar"+(isBotGame?0:i))?.value??(i%AVATARS.length))
   }));
   deck=makeDeck(); discard=[];
   players.forEach(p=>{for(let i=0;i<7;i++)p.hand.push(drawOne());});
@@ -253,7 +303,7 @@ function startGame(){
   while(first && (first.color==="wild" || isAction(first))) {deck.unshift(first);first=drawOne();}
   if(!first){first={color:"red",value:"1"};}
   discard.push(first);activeColor=first.color;
-  current=0;direction=1;pendingUno=null;mustDraw=0;gameOver=false;
+  current=0;direction=1;pendingUno=null;mustDraw=0;gameOver=false;lastPlayed=null;
   waitingWild=false;selected=null;handVisible=true;
   $("setup").style.display="none";$("game").style.display="block";
   $("colorOverlay").style.display="none";$("endOverlay").style.display="none";
@@ -304,11 +354,12 @@ function render(){
   $("topCard").innerHTML=cardHTML(getTopCard());
   $("colorLabel").textContent="Current color: "+activeColor.toUpperCase()+(mustDraw?" · PENALTY: "+mustDraw:"");
   $("opponents").innerHTML=players.map((x,i)=>i===current?"":`
-    <div class="player ${x.eliminated?"eliminated":""}">
-      <div class="avatar">${x.bot?"🤖":"😎"}</div>
+    <div class="player ${x.eliminated?"eliminated":""} ${i===current?"active":""}">
+      <div class="avatar">${avatarHTML(x.avatar??i)}</div>
       <div class="player-name">${escapeHTML(x.name)}</div>
       <div class="player-count">${x.eliminated?"ELIMINATED":x.hand.length+" cards"}</div>
     </div>`).join("");
+  $("lastPlay").innerHTML=lastPlayed?`<span>${escapeHTML(lastPlayed.name)} played</span>${cardHTML(lastPlayed.card)}<span>${escapeHTML(lastPlayed.card.value)}${lastPlayed.color&&lastPlayed.card.color==="wild"?" · "+lastPlayed.color.toUpperCase():""}</span>`:"Waiting for the first card…";
   $("handTitle").textContent=isBotGame?"YOUR HAND":p.name.toUpperCase()+"'S HAND";
   $("handCount").textContent=humanHand.length+" cards";
   const h=$("hand");h.innerHTML="";
@@ -321,9 +372,10 @@ function render(){
     h.appendChild(el);
   });
   const humanTurn=!p.bot;
-  $("drawButton").disabled=gameOver||!humanTurn||!handVisible;
-  $("unoButton").disabled=gameOver||!humanTurn||!handVisible||humanHand.length!==1;
-  $("catchButton").disabled=!pendingUno||!humanTurn||!handVisible||pendingUno.player===current;
+  const ownsTurn=!onlineEnabled||onlineSeat===current;
+  $("drawButton").disabled=gameOver||!humanTurn||!handVisible||!ownsTurn;
+  $("unoButton").disabled=gameOver||!humanTurn||!handVisible||humanHand.length!==1||!ownsTurn;
+  $("catchButton").disabled=!pendingUno||!humanTurn||!handVisible||pendingUno.player===current||!ownsTurn;
   publishOnlineState();
 }
 function recycleDeck(){
@@ -431,6 +483,7 @@ function rainbowRoulette(){
 function finishPlay(index,chosenColor){
   const player=players[current], card=player.hand.splice(index,1)[0];
   discard.push(card);activeColor=chosenColor||card.color;pendingUno=null;
+  lastPlayed={name:player.name,card:{...card},color:chosenColor||card.color};
   let skip=0, extraTurn=false;
   say(player.name+" played "+card.value+"!");
   if(card.value==="0")rotateHands();
@@ -519,6 +572,7 @@ function botTurn(){
 function finishBotPlay(index,wildColor){
   const p=players[current],c=p.hand.splice(index,1)[0];
   discard.push(c);activeColor=c.color==="wild"?wildColor:c.color;pendingUno=null;
+  lastPlayed={name:p.name,card:{...c},color:activeColor};
   let skip=0,extra=false;
   say("Mayhem Bot played "+c.value+"!");
   if(c.value==="0")rotateHands();
