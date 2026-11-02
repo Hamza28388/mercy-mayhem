@@ -299,8 +299,9 @@ async function joinOnlineRoom() {
     if (snap.val().status !== 'lobby')
       return alert('This game has already started.');
 
-    const name = (($('playerName0')?.value || 'Player').trim() || 'Player');
-    const avatar = Number($('playerAvatar0')?.value || 0);
+const name = (prompt('Enter your player name:') || 'Player').trim() || 'Player';
+const avatarInput = prompt('Choose your avatar number (1-10):', '1');
+const avatar = Math.max(0, Math.min(9, Number(avatarInput || 1) - 1));
 
     const playerRef = ref.child('players/' + onlineUid);
 
