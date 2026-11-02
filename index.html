@@ -338,30 +338,54 @@ async function joinOnlineRoom() {
 function listenOnlineRoom() {
   if (!onlineRef) return;
 
+  onlineRef.off('value');
+
   onlineRef.on('value', snap => {
     const d = snap.val();
     if (!d) return;
 
     const roomPlayers = Object.values(d.players || {});
+    const lobby = $('onlineLobby');
+    const playerList = $('lobbyPlayers');
+    const startButton = $('lobbyStart');
 
     if (d.status === 'lobby') {
-      $('onlineStatus').textContent =
-        'Players in room: ' + roomPlayers.map(x => x.name).join(', ');
+      lobby.style.display = 'flex';
 
-      $('onlineStart').style.display =
-        onlineHost ? 'inline-block' : 'none';
+      $('lobbyRoomCode').textContent = onlineRoom;
+
+      playerList.innerHTML = roomPlayers.map((p, i) => `
+        <div class="guide-item">
+          <b>${p.name || 'Player ' + (i + 1)}</b>
+          <span>${p.uid === d.host ? '👑 Host' : 'Connected'}</span>
+        </div>
+      `).join('');
+
+      $('lobbyMessage').textContent =
+        roomPlayers.length >= 2
+          ? 'Players are ready! The host can start.'
+          : 'Waiting for another player...';
+
+      startButton.disabled = !onlineHost || roomPlayers.length < 2;
+      startButton.textContent =
+        onlineHost
+          ? (roomPlayers.length >= 2 ? 'START GAME →' : 'WAITING FOR PLAYERS')
+          : 'WAITING FOR HOST';
+
+      $('onlineStart').style.display = 'none';
     }
 
     if (d.status === 'playing' && d.state && !applyingRemote) {
+      lobby.style.display = 'none';
       applyOnlineState(d.state);
     }
   });
 }
 
-function startOnlineGame() {
+async function startOnlineGame() {
   if (!onlineHost) return;
 
-  onlineRef.once('value').then(s => {
+  onlineRef.once('value').then(async s => {
     const d = s.val();
     const roomPlayers = Object.values(d?.players || {});
 
@@ -385,7 +409,8 @@ function startOnlineGame() {
 
     onlineSeat = roomPlayers.findIndex(x => x.uid === onlineUid);
 
-    onlineRef.update({ status: 'playing' });
+   await onlineRef.update({ status: 'playing' });
+$('onlineLobby').style.display = 'none';
     publishOnlineState();
 
   }).catch(e => alert('Could not start game: ' + e.message));
