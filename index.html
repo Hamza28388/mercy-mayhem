@@ -166,6 +166,28 @@ select,input{padding:12px;border:1px solid #d7c6a8;border-radius:10px;background
   </div>
   <p class="info">Each player starts with 7 cards. Enter player names before starting. Only your own hand is shown; other players’ card backs are hidden.</p>
 </section>
+  <div id="onlineLobby" class="overlay">
+  <div class="dialog">
+    <h2>🃏 ONLINE ROOM LOBBY</h2>
+    <p>Share this room code with your friends.</p>
+
+    <h1 id="lobbyRoomCode">------</h1>
+
+    <h3>PLAYERS IN ROOM</h3>
+    <div id="lobbyPlayers"></div>
+
+    <p id="lobbyMessage">Waiting for players...</p>
+
+    <button id="lobbyStart" class="primary"
+      onclick="startOnlineGame()" disabled>
+      WAITING FOR PLAYERS
+    </button>
+
+    <button class="light" onclick="leaveOnline()">
+      LEAVE ROOM
+    </button>
+  </div>
+</div>
 <section id="game">
   <div class="game-layout">
     <aside id="cardGuide" class="guide-panel panel">
