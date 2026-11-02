@@ -226,10 +226,148 @@ const firebaseConfig={apiKey:"AIzaSyBS_DTVrK2HHMXqGISkGPwLP_z7xsL5vQg",authDomai
 let onlineEnabled=false,onlineReady=false,onlineRoom="",onlineUid="",onlineSeat=-1,onlineHost=false,onlineRef=null,applyingRemote=false,publishTimer=null;
 try{if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);firebase.auth().signInAnonymously().then(u=>{onlineUid=u.user.uid;onlineReady=true;$('onlineStatus').textContent='Online service connected. Create or join a room.';}).catch(e=>$('onlineStatus').textContent='Online sign-in error: '+e.message);}catch(e){$('onlineStatus').textContent='Firebase could not start: '+e.message;}
 function makeRoomCode(){return Math.random().toString(36).slice(2,8).toUpperCase();}
-async function createOnlineRoom(){if(!onlineReady)return alert('Please wait for online connection.');const code=makeRoomCode();onlineRoom=code;onlineHost=true;onlineSeat=0;onlineEnabled=true;onlineRef=firebase.database().ref('rooms/'+code);await onlineRef.set({host:onlineUid,status:'lobby',players:[{uid:onlineUid,name:(($('playerName0')?.value||'You').trim()||'You'),avatar:Number($('playerAvatar0')?.value||0)}],createdAt:firebase.database.ServerValue.TIMESTAMP});listenOnlineRoom();$('roomInfo').textContent='ROOM: '+code;$('onlineStatus').textContent='Room created. Share this code with friends.';$('onlineStart').style.display='inline-block';}
-async function joinOnlineRoom(){if(!onlineReady)return alert('Please wait for online connection.');const code=($('joinCode').value||'').trim().toUpperCase();if(!/^[A-Z0-9]{6}$/.test(code))return alert('Enter the 6-character room code.');const ref=firebase.database().ref('rooms/'+code);const snap=await ref.get();if(!snap.exists())return alert('Room not found. Check the code.');const data=snap.val();if(data.status!=='lobby')return alert('This game has already started.');if((data.players||[]).length>=8)return alert('This room is full.');onlineRoom=code;onlineHost=false;onlineSeat=data.players.length;onlineEnabled=true;onlineRef=ref;const name=(($('playerName0')?.value||'Player').trim()||'Player');await ref.child('players').transaction(a=>{a=a||[];if(a.some(x=>x.uid===onlineUid))return a;if(a.length>=8)return; a.push({uid:onlineUid,name,avatar:Number($('playerAvatar0')?.value||0)});return a;});listenOnlineRoom();$('roomInfo').textContent='ROOM: '+code;$('onlineStatus').textContent='Joined room. Waiting for host to start.';}
-function listenOnlineRoom(){if(!onlineRef)return;onlineRef.on('value',snap=>{const d=snap.val();if(!d)return;if(d.status==='lobby'){$('onlineStatus').textContent='Players in room: '+(d.players||[]).map(x=>x.name).join(', ');$('onlineStart').style.display=onlineHost?'inline-block':'none';}if(d.status==='playing'&&d.state&&!applyingRemote){applyOnlineState(d.state);}});}
-function startOnlineGame(){if(!onlineHost)return;onlineRef.once('value').then(s=>{const d=s.val();if(!d||d.players.length<2)return alert('At least 2 players must join first.');const names=d.players.map(x=>x.name);$('playerCount').value=String(names.length);renderNameFields();names.forEach((n,i)=>{const el=$('playerName'+i);if(el)el.value=n;const av=$('playerAvatar'+i);if(av&&d.players[i])av.value=String(d.players[i].avatar??(i%AVATARS.length));});startGame();onlineSeat=d.players.findIndex(x=>x.uid===onlineUid);onlineRef.update({status:'playing'});publishOnlineState();});}
+  async function createOnlineRoom() {
+  if (!onlineReady) return alert('Please wait for online connection.');
+
+  try {
+    const code = makeRoomCode();
+    const name = (($('playerName0')?.value || 'You').trim() || 'You');
+    const avatar = Number($('playerAvatar0')?.value || 0);
+
+    onlineRoom = code;
+    onlineHost = true;
+    onlineSeat = 0;
+    onlineEnabled = true;
+    onlineRef = firebase.database().ref('rooms/' + code);
+
+    await onlineRef.set({
+      host: onlineUid,
+      status: 'lobby',
+      players: {
+        [onlineUid]: { uid: onlineUid, name, avatar }
+      },
+      createdAt: firebase.database.ServerValue.TIMESTAMP
+    });
+
+    listenOnlineRoom();
+
+    $('roomInfo').textContent = 'ROOM: ' + code;
+    $('onlineStatus').textContent = 'Room created. Share this code with friends.';
+    $('onlineStart').style.display = 'inline-block';
+
+  } catch (e) {
+    alert('Could not create room: ' + e.message);
+  }
+}
+
+async function joinOnlineRoom() {
+  if (!onlineReady) return alert('Please wait for online connection.');
+
+  const code = ($('joinCode').value || '').trim().toUpperCase();
+
+  if (!/^[A-Z0-9]{6}$/.test(code))
+    return alert('Enter the 6-character room code.');
+
+  const ref = firebase.database().ref('rooms/' + code);
+
+  try {
+    const snap = await ref.get();
+
+    if (!snap.exists()) return alert('Room not found.');
+    if (snap.val().status !== 'lobby')
+      return alert('This game has already started.');
+
+    const name = (($('playerName0')?.value || 'Player').trim() || 'Player');
+    const avatar = Number($('playerAvatar0')?.value || 0);
+
+    const playerRef = ref.child('players/' + onlineUid);
+
+    const result = await playerRef.transaction(existing => {
+      if (existing) return existing;
+      return { uid: onlineUid, name, avatar };
+    });
+
+    if (!result.committed)
+      return alert('Could not join the room.');
+
+    const updated = await ref.get();
+    const room = updated.val();
+    const ids = Object.keys(room.players || {});
+
+    if (ids.length > 8)
+      return alert('This room is full.');
+
+    onlineRoom = code;
+    onlineHost = false;
+    onlineSeat = ids.indexOf(onlineUid);
+    onlineEnabled = true;
+    onlineRef = ref;
+
+    listenOnlineRoom();
+
+    $('roomInfo').textContent = 'ROOM: ' + code;
+    $('onlineStatus').textContent = 'Joined room. Waiting for host to start.';
+
+  } catch (e) {
+    alert('Could not join room: ' + e.message);
+  }
+}
+
+function listenOnlineRoom() {
+  if (!onlineRef) return;
+
+  onlineRef.on('value', snap => {
+    const d = snap.val();
+    if (!d) return;
+
+    const roomPlayers = Object.values(d.players || {});
+
+    if (d.status === 'lobby') {
+      $('onlineStatus').textContent =
+        'Players in room: ' + roomPlayers.map(x => x.name).join(', ');
+
+      $('onlineStart').style.display =
+        onlineHost ? 'inline-block' : 'none';
+    }
+
+    if (d.status === 'playing' && d.state && !applyingRemote) {
+      applyOnlineState(d.state);
+    }
+  });
+}
+
+function startOnlineGame() {
+  if (!onlineHost) return;
+
+  onlineRef.once('value').then(s => {
+    const d = s.val();
+    const roomPlayers = Object.values(d?.players || {});
+
+    if (roomPlayers.length < 2)
+      return alert('At least 2 players must join first.');
+
+    const names = roomPlayers.map(x => x.name);
+
+    $('playerCount').value = String(names.length);
+    renderNameFields();
+
+    names.forEach((n, i) => {
+      const el = $('playerName' + i);
+      if (el) el.value = n;
+
+      const av = $('playerAvatar' + i);
+      if (av) av.value = String(roomPlayers[i].avatar ?? (i % AVATARS.length));
+    });
+
+    startGame();
+
+    onlineSeat = roomPlayers.findIndex(x => x.uid === onlineUid);
+
+    onlineRef.update({ status: 'playing' });
+    publishOnlineState();
+
+  }).catch(e => alert('Could not start game: ' + e.message));
+}
 function onlineState(){return {players,deck,discard,current,direction,activeColor,pendingUno,mustDraw,gameOver,isBotGame:false,lastPlayed};}
 function publishOnlineState(){if(!onlineEnabled||applyingRemote||!onlineRef||!players.length)return;clearTimeout(publishTimer);publishTimer=setTimeout(()=>onlineRef.child('state').set(onlineState()),120);}
 function applyOnlineState(st){applyingRemote=true;players=st.players||[];deck=st.deck||[];discard=st.discard||[];current=st.current||0;direction=st.direction||1;activeColor=st.activeColor||'red';pendingUno=st.pendingUno||null;mustDraw=st.mustDraw||0;gameOver=!!st.gameOver;isBotGame=false;$('setup').style.display='none';$('game').style.display='block';$('colorOverlay').style.display='none';$('endOverlay').style.display='none';render();applyingRemote=false;}
